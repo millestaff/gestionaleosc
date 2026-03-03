@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Documentazione — Gestionale Polizia{% endblock %}
+{% block page_title %}Documentazione{% endblock %}
+{% block breadcrumb %}Home / Documentazione{% endblock %}
+
+{% block content %}
+{% if user.permission >= 50 %}
+<div class="card">
+  <div class="card-title">📁 Aggiungi Documento</div>
+  <form id="addDocForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Titolo</label>
+      <input name="titolo" placeholder="Titolo documento..." style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;">
+    </div>
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Categoria</label>
+      <select name="categoria" style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;">
+        <option value="regolamento">Regolamento</option>
+        <option value="protocollo">Protocollo</option>
+        <option value="modulo">Modulo</option>
+        <option value="altro">Altro</option>
+      </select>
+    </div>
+    <div style="grid-column:1/-1;">
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Contenuto</label>
+      <textarea name="contenuto" rows="4" placeholder="Contenuto del documento..." style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;resize:vertical;"></textarea>
+    </div>
+    <div style="grid-column:1/-1;">
+      <button type="button" onclick="addDoc()" class="btn btn-primary">📁 Aggiungi Documento</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title">📚 Archivio Documenti</div>
+  {% if docs %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    {% for doc in docs %}
+    <div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:22px;">
+          {% if doc.categoria == 'regolamento' %}📜
+          {% elif doc.categoria == 'protocollo' %}📋
+          {% elif doc.categoria == 'modulo' %}📝
+          {% else %}📄{% endif %}
+        </span>
+        {% if doc.categoria == 'regolamento' %}
+          <span class="pill pill-red">Regolamento</span>
+        {% elif doc.categoria == 'protocollo' %}
+          <span class="pill pill-yellow">Protocollo</span>
+        {% elif doc.categoria == 'modulo' %}
+          <span class="pill pill-green">Modulo</span>
+        {% else %}
+          <span class="pill pill-blue">Altro</span>
+        {% endif %}
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">{{ doc.titolo }}</div>
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.5;max-height:60px;overflow:hidden;">{{ doc.contenuto }}</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text-muted);">
+        Aggiunto da <strong>{{ doc.author }}</strong> — {{ doc.timestamp }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    📭 Nessun documento in archivio.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+async function addDoc() {
+  const form = document.getElementById('addDocForm');
+  const data = new FormData(form);
+  const res = await fetch('/dashboard/documentazione/add', { method: 'POST', body: data });
+  const json = await res.json();
+  if (json.status === 'ok') { alert(json.message); location.reload(); }
+  else { alert('Errore: ' + json.detail); }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Agenti — Gestionale Polizia{% endblock %}
+{% block page_title %}Agenti{% endblock %}
+{% block breadcrumb %}Home / Agenti{% endblock %}
+
+{% block content %}
+{% if user.permission >= 100 %}
+<div class="card">
+  <div class="card-title">➕ Aggiungi Nuovo Agente</div>
+  <form id="addAgentForm" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Discord ID</label>
+      <input name="discord_id" placeholder="es. 123456789" style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;">
+    </div>
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Username</label>
+      <input name="username" placeholder="es. Mario Rossi" style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;">
+    </div>
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Grado</label>
+      <select name="rank" style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;">
+        <option value="Agente">Agente</option>
+        <option value="Ufficiale">Ufficiale</option>
+        <option value="Comandante">Comandante</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Numero Distintivo</label>
+      <input name="badge_number" placeholder="es. 0042" style="width:100%;padding:9px 12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:13px;">
+    </div>
+    <div style="grid-column:1/-1;">
+      <button type="button" onclick="addAgent()" class="btn btn-primary">➕ Aggiungi Agente</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title">👮 Lista Agenti</div>
+  {% if agents %}
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Grado</th>
+        <th>Distintivo</th>
+        <th>Discord ID</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for agent in agents %}
+      <tr>
+        <td><strong style="color:var(--text-primary)">{{ agent.username }}</strong></td>
+        <td>
+          {% if agent.rank == 'Comandante' %}
+            <span class="pill pill-red">{{ agent.rank }}</span>
+          {% elif agent.rank == 'Ufficiale' %}
+            <span class="pill pill-yellow">{{ agent.rank }}</span>
+          {% else %}
+            <span class="pill pill-blue">{{ agent.rank }}</span>
+          {% endif %}
+        </td>
+        <td>#{{ agent.badge_number }}</td>
+        <td style="font-family:monospace;font-size:12px;">{{ agent.discord_id }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">Nessun agente registrato.</p>
+  {% endif %}
+</div>
+
+<script>
+async function addAgent() {
+  const form = document.getElementById('addAgentForm');
+  const data = new FormData(form);
+  const res = await fetch('/dashboard/agenti/add', { method: 'POST', body: data });
+  const json = await res.json();
+  if (json.status === 'ok') { alert(json.message); location.reload(); }
+  else { alert('Errore: ' + json.detail); }
+}
+</script>
+{% endblock %}

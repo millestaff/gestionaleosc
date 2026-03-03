@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Statistiche — Ospedale San Camillo{% endblock %}
+{% block page_title %}Statistiche{% endblock %}
+{% block breadcrumb %}Home / Statistiche{% endblock %}
+
+{% block content %}
+<!-- Riepilogo numerico -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="s-icon">👥</span>
+    <div class="s-label">Dipendenti Totali</div>
+    <div class="s-value">{{ stats.dipendenti_totali }}</div>
+  </div>
+  <div class="stat-card">
+    <span class="s-icon">🛏️</span>
+    <div class="s-label">Pazienti Ricoverati</div>
+    <div class="s-value">{{ stats.pazienti_ricoverati }}</div>
+  </div>
+  <div class="stat-card">
+    <span class="s-icon">✅</span>
+    <div class="s-label">Pazienti Dimessi</div>
+    <div class="s-value" style="color:var(--success)">{{ stats.pazienti_dimessi }}</div>
+  </div>
+  <div class="stat-card">
+    <span class="s-icon">⚠️</span>
+    <div class="s-label">Richiami Attivi</div>
+    <div class="s-value" style="color:var(--warning)">{{ stats.richiami_attivi }}</div>
+  </div>
+  <div class="stat-card">
+    <span class="s-icon">🚨</span>
+    <div class="s-label">Segnalazioni Aperte</div>
+    <div class="s-value" style="color:var(--danger)">{{ stats.segnalazioni_aperte }}</div>
+  </div>
+  <div class="stat-card">
+    <span class="s-icon">📁</span>
+    <div class="s-label">Documenti Totali</div>
+    <div class="s-value">{{ stats.documenti_totali }}</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- Distribuzione personale -->
+  <div class="card">
+    <div class="card-title">👥 Distribuzione Personale</div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;color:var(--text-dim);">💼 Dirigenza</span>
+          <span style="font-size:13px;font-weight:600;">{{ stats.dirigenza }}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+          {% if stats.dipendenti_totali > 0 %}
+          <div style="width:{{ (stats.dirigenza / stats.dipendenti_totali * 100)|round }}%;height:100%;background:var(--danger);border-radius:3px;"></div>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;color:var(--text-dim);">💉 Reparto</span>
+          <span style="font-size:13px;font-weight:600;">{{ stats.reparto }}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+          {% if stats.dipendenti_totali > 0 %}
+          <div style="width:{{ (stats.reparto / stats.dipendenti_totali * 100)|round }}%;height:100%;background:var(--warning);border-radius:3px;"></div>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;color:var(--text-dim);">🩺 Tirocinio</span>
+          <span style="font-size:13px;font-weight:600;">{{ stats.tirocinio }}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+          {% if stats.dipendenti_totali > 0 %}
+          <div style="width:{{ (stats.tirocinio / stats.dipendenti_totali * 100)|round }}%;height:100%;background:var(--accent);border-radius:3px;"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pazienti -->
+  <div class="card">
+    <div class="card-title">🛏️ Stato Pazienti</div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;color:var(--text-dim);">🛏️ Ricoverati</span>
+          <span style="font-size:13px;font-weight:600;">{{ stats.pazienti_ricoverati }}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+          {% if stats.pazienti_totali > 0 %}
+          <div style="width:{{ (stats.pazienti_ricoverati / stats.pazienti_totali * 100)|round }}%;height:100%;background:var(--accent);border-radius:3px;"></div>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:13px;color:var(--text-dim);">✅ Dimessi</span>
+          <span style="font-size:13px;font-weight:600;">{{ stats.pazienti_dimessi }}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+          {% if stats.pazienti_totali > 0 %}
+          <div style="width:{{ (stats.pazienti_dimessi / stats.pazienti_totali * 100)|round }}%;height:100%;background:var(--success);border-radius:3px;"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;">
+      <span style="font-size:12px;color:var(--text-muted);">Totale pazienti registrati</span>
+      <strong style="font-size:14px;">{{ stats.pazienti_totali }}</strong>
+    </div>
+  </div>
+
+  <!-- Richiami -->
+  <div class="card">
+    <div class="card-title">⚠️ Richiami</div>
+    <div style="display:flex;gap:16px;">
+      <div style="flex:1;text-align:center;padding:16px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:32px;font-weight:700;color:var(--danger);">{{ stats.richiami_attivi }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Attivi</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:16px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:32px;font-weight:700;color:var(--success);">{{ stats.richiami_chiusi }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Chiusi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Segnalazioni -->
+  <div class="card">
+    <div class="card-title">🚨 Segnalazioni</div>
+    <div style="display:flex;gap:16px;">
+      <div style="flex:1;text-align:center;padding:16px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:32px;font-weight:700;color:var(--danger);">{{ stats.segnalazioni_aperte }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Aperte</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:16px;background:var(--bg-primary);border-radius:10px;border:1px solid var(--border);">
+        <div style="font-size:32px;font-weight:700;color:var(--success);">{{ stats.documenti_totali }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Documenti</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

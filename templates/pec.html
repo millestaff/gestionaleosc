@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}PEC — Ospedale San Camillo{% endblock %}
+{% block page_title %}PEC{% endblock %}
+{% block breadcrumb %}Home / Comunicazioni / PEC{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">✉️ Nuova PEC</div>
+  <form id="addForm" style="display:flex;flex-direction:column;gap:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Destinatario</label>
+        <select name="destinatario" class="form-select">
+          <option value="">-- Seleziona destinatario --</option>
+          <optgroup label="👥 Dipendenti">
+            {% for d in dipendenti %}
+            <option value="{{ d.nome }} {{ d.cognome }} ({{ d.ruolo }})">
+              {{ d.nome }} {{ d.cognome }} — {{ d.ruolo }}
+            </option>
+            {% endfor %}
+          </optgroup>
+          <optgroup label="🏛️ Enti Esterni">
+            <option value="Direzione Sanitaria Regionale">Direzione Sanitaria Regionale</option>
+            <option value="ASL Territoriale">ASL Territoriale</option>
+            <option value="Ministero della Salute">Ministero della Salute</option>
+            <option value="INPS">INPS</option>
+            <option value="Tribunale">Tribunale</option>
+            <option value="Forze dell'Ordine">Forze dell'Ordine</option>
+            <option value="Altro Ente">Altro Ente</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Oggetto</label>
+        <input name="oggetto" class="form-input" placeholder="Oggetto della PEC...">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priorità</label>
+      <select name="priorita" class="form-select">
+        <option value="normale">🔵 Normale</option>
+        <option value="urgente">🟡 Urgente</option>
+        <option value="riservata">🔴 Riservata</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Corpo del Messaggio</label>
+      <textarea name="corpo" class="form-textarea" rows="5" placeholder="Scrivi il testo della PEC..."></textarea>
+    </div>
+    <div>
+      <button type="button" onclick="sendPec()" class="btn btn-primary">✉️ Invia PEC</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-title">📬 PEC Inviate</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"    class="btn btn-ghost btn-sm">Tutte</button>
+    <button onclick="filtra('normale')"  class="btn btn-ghost btn-sm">🔵 Normali</button>
+    <button onclick="filtra('urgente')"  class="btn btn-ghost btn-sm">🟡 Urgenti</button>
+    <button onclick="filtra('riservata')"class="btn btn-ghost btn-sm">🔴 Riservate</button>
+  </div>
+
+  {% if pec_list %}
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Mittente</th>
+        <th>Destinatario</th>
+        <th>Oggetto</th>
+        <th>Priorità</th>
+        <th>Stato</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pec in pec_list %}
+      <tr class="pec-row" data-priorita="{{ pec.priorita or 'normale' }}">
+        <td style="font-size:11px;color:var(--text-muted);">{{ pec.timestamp }}</td>
+        <td><strong style="color:var(--text-primary)">{{ pec.mittente }}</strong></td>
+        <td style="font-size:12px;">{{ pec.destinatario }}</td>
+        <td style="font-size:12px;">{{ pec.oggetto }}</td>
+        <td>
+          {% if pec.priorita == 'riservata' %}
+            <span class="pill pill-red">🔴 Riservata</span>
+          {% elif pec.priorita == 'urgente' %}
+            <span class="pill pill-yellow">🟡 Urgente</span>
+          {% else %}
+            <span class="pill pill-blue">🔵 Normale</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if pec.stato == 'inviata' %}
+            <span class="pill pill-green">✅ Inviata</span>
+          {% else %}
+            <span class="pill pill-yellow">⏳ In Attesa</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    📭 Nessuna PEC inviata.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+function filtra(p) {
+  document.querySelectorAll('.pec-row').forEach(r => {
+    r.style.display = (p === 'tutti' || r.dataset.priorita === p) ? '' : 'none';
+  });
+}
+async function sendPec() {
+  const fd = new FormData(document.getElementById('addForm'));
+  const r = await fetch('/dashboard/pec/send', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { alert(j.message); location.reload(); }
+  else { alert('Errore: ' + j.detail); }
+}
+</script>
+{% endblock %}

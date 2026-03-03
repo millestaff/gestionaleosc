@@ -1,0 +1,55 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DISCORD_CLIENT_ID     = os.getenv("DISCORD_CLIENT_ID", "")
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
+DISCORD_BOT_TOKEN     = os.getenv("DISCORD_BOT_TOKEN", "")
+DISCORD_GUILD_ID      = int(os.getenv("DISCORD_GUILD_ID", "0"))
+DISCORD_REDIRECT_URI  = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8000/auth/callback")
+
+DISCORD_API_BASE = "https://discord.com/api/v10"
+
+MONGODB_URI     = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "gestionale")
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
+APP_HOST   = os.getenv("APP_HOST", "0.0.0.0")
+APP_PORT   = int(os.getenv("APP_PORT", "8000"))
+
+OSPEDALE_NOME = "Ospedale San Camillo"
+
+ROLE_PERMISSIONS: dict[str, int] = {
+    os.getenv("ROLE_DIRETTORE",       ""): 100,
+    os.getenv("ROLE_RESP_ASSUNZIONE", ""):  50,
+    os.getenv("ROLE_RESP_FARMACIA",   ""):  50,
+    os.getenv("ROLE_RESP_AMMSANITA",  ""):  50,
+    os.getenv("ROLE_PRIMARIO",        ""):  50,
+    os.getenv("ROLE_VICE_PRIMARIO",   ""):  50,
+    os.getenv("ROLE_SPECIALISTA",     ""):  10,
+    os.getenv("ROLE_MED_FORMAZIONE",  ""):  10,
+    os.getenv("ROLE_MEDICO_BASE",     ""):  10,
+    os.getenv("ROLE_INFERMIERE",      ""):  10,
+    os.getenv("ROLE_TIROCINANTE",     ""):  10,
+}
+ROLE_PERMISSIONS = {k: v for k, v in ROLE_PERMISSIONS.items() if k}
+
+RUOLI_DIRIGENZA = [
+    "Direttore",
+    "Responsabile Assunzione e Formazione",
+    "Responsabile Farmacia",
+    "Responsabile Amministrazione e Sanità",
+]
+RUOLI_REPARTO = [
+    "Primario",
+    "Vice Primario",
+    "Specialista",
+    "Medico in Formazione Specialistica",
+]
+RUOLI_TIROCINIO = [
+    "Medico di Base",
+    "Medico Assistente",
+    "Medico Tirocinante",
+]
+TUTTI_RUOLI = RUOLI_DIRIGENZA + RUOLI_REPARTO + RUOLI_TIROCINIO

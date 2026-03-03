@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Storico — Ospedale San Camillo{% endblock %}
+{% block page_title %}Storico{% endblock %}
+{% block breadcrumb %}Home / Storico{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">📋 Registro Attività</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"      class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtra('completata')" class="btn btn-ghost btn-sm">✅ Completate</button>
+    <button onclick="filtra('in corso')"   class="btn btn-ghost btn-sm">🟡 In Corso</button>
+    <button onclick="filtra('annullata')"  class="btn btn-ghost btn-sm">🔴 Annullate</button>
+  </div>
+
+  {% if actions %}
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Operatore</th>
+        <th>Tipo Azione</th>
+        <th>Dettaglio</th>
+        <th>Reparto</th>
+        <th>Stato</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in actions %}
+      <tr class="act-row" data-status="{{ a.status }}">
+        <td style="font-size:11px;color:var(--text-muted);">{{ a.timestamp }}</td>
+        <td><strong style="color:var(--text-primary)">{{ a.agent }}</strong></td>
+        <td>{{ a.type }}</td>
+        <td style="max-width:250px;font-size:12px;">{{ a.detail }}</td>
+        <td style="font-size:12px;">{{ a.reparto or '—' }}</td>
+        <td>
+          {% if a.status == 'completata' %}
+            <span class="pill pill-green">✅ Completata</span>
+          {% elif a.status == 'in corso' %}
+            <span class="pill pill-yellow">🟡 In Corso</span>
+          {% else %}
+            <span class="pill pill-red">🔴 Annullata</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    📭 Nessuna attività registrata.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+function filtra(stato) {
+  document.querySelectorAll('.act-row').forEach(r => {
+    r.style.display = (stato === 'tutti' || r.dataset.status === stato) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Aggiungi Dipendente — Ospedale San Camillo{% endblock %}
+{% block page_title %}Aggiungi Dipendente{% endblock %}
+{% block breadcrumb %}Home / Gestione / Aggiungi Dipendente{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+  <div class="card-title">➕ Nuovo Dipendente</div>
+  <form id="addForm" style="display:flex;flex-direction:column;gap:20px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input name="nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input name="cognome" class="form-input" placeholder="Cognome...">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Discord ID</label>
+        <input name="discord_id" class="form-input" placeholder="es. 123456789012345678">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Badge</label>
+        <input name="badge" class="form-input" placeholder="es. SC-0042">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Ruolo</label>
+        <select name="ruolo" class="form-select">
+          <optgroup label="💼 Dirigenza">
+            <option value="Direttore">Direttore</option>
+            <option value="Responsabile Assunzione e Formazione">Responsabile Assunzione e Formazione</option>
+            <option value="Responsabile Farmacia">Responsabile Farmacia</option>
+            <option value="Responsabile Amministrazione e Sanità">Responsabile Amministrazione e Sanità</option>
+          </optgroup>
+          <optgroup label="💉 Reparto">
+            <option value="Primario">Primario</option>
+            <option value="Vice Primario">Vice Primario</option>
+            <option value="Specialista">Specialista</option>
+            <option value="Medico in Formazione Specialistica">Medico in Formazione Specialistica</option>
+          </optgroup>
+          <optgroup label="🩺 Tirocinio">
+            <option value="Medico di Base">Medico di Base</option>
+            <option value="Medico Assistente">Medico Assistente (Infermiere)</option>
+            <option value="Medico Tirocinante">Medico Tirocinante</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Iniziale</label>
+        <select name="stato" class="form-select">
+          <option value="in servizio">🟢 In Servizio</option>
+          <option value="fuori servizio">🔴 Fuori Servizio</option>
+          <option value="ferie">🟡 Ferie</option>
+          <option value="congedo">🟠 Congedo</option>
+          <option value="sospeso">⛔ Sospeso</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note aggiuntive</label>
+      <textarea name="note" class="form-textarea" rows="3" placeholder="Note opzionali..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button type="button" onclick="aggiungi()" class="btn btn-primary">➕ Aggiungi Dipendente</button>
+      <a href="/dashboard" class="btn btn-ghost">Annulla</a>
+    </div>
+  </form>
+</div>
+
+<script>
+async function aggiungi() {
+  const fd = new FormData(document.getElementById('addForm'));
+  const r = await fetch('/dashboard/dipendenti/add', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { alert(j.message); window.location.href = '/dashboard'; }
+  else { alert('Errore: ' + (j.detail || 'sconosciuto')); }
+}
+</script>
+{% endblock %}

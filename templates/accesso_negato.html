@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Accesso Negato — Ospedale San Camillo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent: #dc2626; --bg: #0f0a0a; --card: #1a0d0d; --border: #2d1515; --text: #fef2f2; --muted: #6b4f4f; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: var(--bg);
+      font-family: 'Inter', sans-serif; color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 48px 40px; text-align: center;
+      max-width: 440px; width: 90%;
+      box-shadow: 0 0 80px rgba(220,38,38,.15);
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background: var(--accent);
+    }
+    .icon { font-size: 52px; margin-bottom: 16px; }
+    h1 { font-size: 22px; font-weight: 700; color: #ef4444; margin-bottom: 8px; }
+    .username { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+    .motivo {
+      background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.15);
+      border-radius: 10px; padding: 14px 18px;
+      font-size: 13px; color: var(--muted); line-height: 1.7;
+      margin-bottom: 28px; text-align: left;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      padding: 11px 24px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; text-decoration: none;
+      transition: background .15s;
+    }
+    .btn:hover { background: #ef4444; }
+    footer { margin-top: 24px; font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🚫</div>
+    <h1>Accesso Negato</h1>
+    {% if username %}
+    <div class="username">Account: <strong>{{ username }}</strong></div>
+    {% endif %}
+    <div class="motivo">
+      <strong style="color:#fca5a5;">⚠️ Motivo:</strong><br>
+      {{ motivo }}
+    </div>
+    <a href="/auth/logout" class="btn">← Torna al Login</a>
+    <footer>© Ospedale San Camillo — Gestionale Interno</footer>
+  </div>
+</body>
+</html>

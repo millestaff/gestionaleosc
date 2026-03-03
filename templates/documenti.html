@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Documenti — Ospedale San Camillo{% endblock %}
+{% block page_title %}Documenti{% endblock %}
+{% block breadcrumb %}Home / Operativo / Documenti{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">📁 Aggiungi Documento</div>
+  <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="form-group">
+      <label class="form-label">Titolo</label>
+      <input name="titolo" class="form-input" placeholder="Titolo documento...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <select name="categoria" class="form-select">
+        <option value="verbale">📝 Verbale</option>
+        <option value="referto">🩺 Referto Medico</option>
+        <option value="rapporto">📋 Rapporto Operativo</option>
+        <option value="regolamento">📜 Regolamento</option>
+        <option value="modulo">📄 Modulo</option>
+        <option value="protocollo">🔬 Protocollo</option>
+        <option value="altro">📎 Altro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Riferimento (opzionale)</label>
+      <input name="riferimento" class="form-input" placeholder="es. Paziente, Dipendente...">
+    </div>
+    <div class="form-group" style="grid-column:1/-1;">
+      <label class="form-label">Contenuto</label>
+      <textarea name="contenuto" class="form-textarea" rows="4" placeholder="Contenuto del documento..."></textarea>
+    </div>
+    <div style="grid-column:1/-1;">
+      <button type="button" onclick="addDoc()" class="btn btn-primary">📁 Aggiungi Documento</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-title">📚 Archivio Documenti</div>
+
+  <!-- Filtri categoria -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <a href="/dashboard/documenti?categoria=tutti"       class="btn btn-ghost btn-sm {% if categoria_attiva=='tutti' %}btn-primary{% endif %}">Tutti</a>
+    <a href="/dashboard/documenti?categoria=verbale"     class="btn btn-ghost btn-sm {% if categoria_attiva=='verbale' %}btn-primary{% endif %}">📝 Verbali</a>
+    <a href="/dashboard/documenti?categoria=referto"     class="btn btn-ghost btn-sm {% if categoria_attiva=='referto' %}btn-primary{% endif %}">🩺 Referti</a>
+    <a href="/dashboard/documenti?categoria=rapporto"    class="btn btn-ghost btn-sm {% if categoria_attiva=='rapporto' %}btn-primary{% endif %}">📋 Rapporti</a>
+    <a href="/dashboard/documenti?categoria=regolamento" class="btn btn-ghost btn-sm {% if categoria_attiva=='regolamento' %}btn-primary{% endif %}">📜 Regolamenti</a>
+    <a href="/dashboard/documenti?categoria=modulo"      class="btn btn-ghost btn-sm {% if categoria_attiva=='modulo' %}btn-primary{% endif %}">📄 Moduli</a>
+    <a href="/dashboard/documenti?categoria=protocollo"  class="btn btn-ghost btn-sm {% if categoria_attiva=='protocollo' %}btn-primary{% endif %}">🔬 Protocolli</a>
+    <a href="/dashboard/documenti?categoria=altro"       class="btn btn-ghost btn-sm {% if categoria_attiva=='altro' %}btn-primary{% endif %}">📎 Altro</a>
+  </div>
+
+  {% if docs %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
+    {% for doc in docs %}
+    <div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s;"
+         onmouseover="this.style.borderColor='var(--accent)'"
+         onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <span style="font-size:24px;">
+          {% if doc.categoria == 'verbale' %}📝
+          {% elif doc.categoria == 'referto' %}🩺
+          {% elif doc.categoria == 'rapporto' %}📋
+          {% elif doc.categoria == 'regolamento' %}📜
+          {% elif doc.categoria == 'modulo' %}📄
+          {% elif doc.categoria == 'protocollo' %}🔬
+          {% else %}📎{% endif %}
+        </span>
+        <span class="pill
+          {% if doc.categoria == 'verbale' %}pill-blue
+          {% elif doc.categoria == 'referto' %}pill-green
+          {% elif doc.categoria == 'rapporto' %}pill-yellow
+          {% elif doc.categoria == 'regolamento' %}pill-red
+          {% else %}pill-gray{% endif %}">
+          {{ doc.categoria | title }}
+        </span>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">{{ doc.titolo }}</div>
+      {% if doc.riferimento %}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">📎 Rif: {{ doc.riferimento }}</div>
+      {% endif %}
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.5;max-height:55px;overflow:hidden;">{{ doc.contenuto }}</div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;">
+        <span>👤 {{ doc.author }}</span>
+        <span>{{ doc.timestamp }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    📭 Nessun documento in archivio.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+async function addDoc() {
+  const fd = new FormData(document.getElementById('addForm'));
+  const r = await fetch('/dashboard/documenti/add', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { alert(j.message); location.reload(); }
+  else { alert('Errore: ' + j.detail); }
+}
+</script>
+{% endblock %}

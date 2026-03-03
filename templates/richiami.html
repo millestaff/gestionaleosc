@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Richiami — Ospedale San Camillo{% endblock %}
+{% block page_title %}Richiami{% endblock %}
+{% block breadcrumb %}Home / Operativo / Richiami{% endblock %}
+
+{% block content %}
+{% if user.permission >= 50 %}
+<div class="card">
+  <div class="card-title">⚠️ Assegna Nuovo Richiamo</div>
+  <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="form-group">
+      <label class="form-label">Dipendente</label>
+      <select name="destinatario" id="dest-select" class="form-select" onchange="aggiornaDID()">
+        <option value="">-- Seleziona dipendente --</option>
+        {% for d in dipendenti %}
+        <option value="{{ d.nome }} {{ d.cognome }}" data-did="{{ d.discord_id }}">
+          {{ d.nome }} {{ d.cognome }} — {{ d.ruolo }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo Richiamo</label>
+      <select name="tipo" class="form-select">
+        <option value="Richiamo Verbale">🟡 Richiamo Verbale</option>
+        <option value="Richiamo Scritto">🟠 Richiamo Scritto</option>
+        <option value="Avviso Formale">🔴 Avviso Formale</option>
+        <option value="Sospensione">⛔ Sospensione</option>
+        <option value="Licenziamento">❌ Licenziamento</option>
+      </select>
+    </div>
+    <input type="hidden" name="discord_id" id="dest-did">
+    <div class="form-group" style="grid-column:1/-1;">
+      <label class="form-label">Motivazione</label>
+      <textarea name="motivazione" class="form-textarea" rows="3" placeholder="Descrivi la motivazione del richiamo..."></textarea>
+    </div>
+    <div style="grid-column:1/-1;">
+      <button type="button" onclick="addRichiamo()" class="btn btn-primary">⚠️ Assegna Richiamo</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title">📋 Registro Richiami</div>
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"  class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtra('attivo')" class="btn btn-ghost btn-sm">🔴 Attivi</button>
+    <button onclick="filtra('chiuso')" class="btn btn-ghost btn-sm">✅ Chiusi</button>
+  </div>
+
+  {% if richiami %}
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Dipendente</th>
+        <th>Tipo</th>
+        <th>Motivazione</th>
+        <th>Emesso Da</th>
+        <th>Stato</th>
+        <th>Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in richiami %}
+      <tr class="rich-row" data-status="{{ r.status }}">
+        <td style="font-size:11px;color:var(--text-muted);">{{ r.timestamp }}</td>
+        <td><strong style="color:var(--text-primary)">{{ r.destinatario }}</strong></td>
+        <td>
+          {% if r.tipo == 'Richiamo Verbale' %}
+            <span class="pill pill-yellow">🟡 Verbale</span>
+          {% elif r.tipo == 'Richiamo Scritto' %}
+            <span class="pill pill-yellow">🟠 Scritto</span>
+          {% elif r.tipo == 'Avviso Formale' %}
+            <span class="pill pill-red">🔴 Formale</span>
+          {% elif r.tipo == 'Sospensione' %}
+            <span class="pill pill-red">⛔ Sospensione</span>
+          {% else %}
+            <span class="pill pill-red">❌ Licenziamento</span>
+          {% endif %}
+        </td>
+        <td style="max-width:250px;font-size:12px;">{{ r.motivazione }}</td>
+        <td style="font-size:12px;">{{ r.emesso_da }}</td>
+        <td>
+          {% if r.status == 'attivo' %}
+            <span class="pill pill-red">Attivo</span>
+          {% else %}
+            <span class="pill pill-green">Chiuso</span>
+          {% endif %}
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            {% if r.status == 'attivo' and user.permission >= 50 %}
+            <button onclick="chiudiRichiamo('{{ r._id }}')" class="btn btn-ghost btn-sm">✅ Chiudi</button>
+            {% endif %}
+            {% if user.permission >= 100 %}
+            <button onclick="eliminaRichiamo('{{ r._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    ✅ Nessun richiamo registrato.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+function aggiornaDID() {
+  const sel = document.getElementById('dest-select');
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('dest-did').value = opt.dataset.did || '';
+}
+function filtra(stato) {
+  document.querySelectorAll('.rich-row').forEach(r => {
+    r.style.display = (stato === 'tutti' || r.dataset.status === stato) ? '' : 'none';
+  });
+}
+async function addRichiamo() {
+  const fd = new FormData(document.getElementById('addForm'));
+  const r = await fetch('/dashboard/richiami/add', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { alert(j.message); location.reload(); }
+  else { alert('Errore: ' + j.detail); }
+}
+async function chiudiRichiamo(id) {
+  if (!confirm('Confermi la chiusura del richiamo?')) return;
+  const fd = new FormData();
+  fd.append('richiamo_id', id);
+  const r = await fetch('/dashboard/richiami/chiudi', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+async function eliminaRichiamo(id) {
+  if (!confirm('Confermi eliminazione DEFINITIVA del richiamo?')) return;
+  const fd = new FormData();
+  fd.append('richiamo_id', id);
+  const r = await fetch('/dashboard/richiami/elimina', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+</script>
+{% endblock %}

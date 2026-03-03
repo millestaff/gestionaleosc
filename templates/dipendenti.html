@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ categoria }} — Ospedale San Camillo{% endblock %}
+{% block page_title %}{{ categoria }}{% endblock %}
+{% block breadcrumb %}Home / Personale / {{ categoria }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">
+    {% if categoria == 'Dirigenza' %}💼
+    {% elif categoria == 'Reparto' %}💉
+    {% else %}🩺{% endif %}
+    {{ categoria }} — {{ dipendenti|length }} dipendenti
+  </div>
+
+  <!-- Filtri stato -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"          class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtra('in servizio')"    class="btn btn-ghost btn-sm">🟢 In Servizio</button>
+    <button onclick="filtra('fuori servizio')" class="btn btn-ghost btn-sm">🔴 Fuori Servizio</button>
+    <button onclick="filtra('ferie')"          class="btn btn-ghost btn-sm">🟡 Ferie</button>
+    <button onclick="filtra('congedo')"        class="btn btn-ghost btn-sm">🟠 Congedo</button>
+    <button onclick="filtra('sospeso')"        class="btn btn-ghost btn-sm">⛔ Sospeso</button>
+  </div>
+
+  {% if dipendenti %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;" id="grid">
+    {% for d in dipendenti %}
+    <div class="dip-card" data-stato="{{ d.stato }}"
+      style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);">{{ d.nome }} {{ d.cognome }}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">{{ d.ruolo }}</div>
+          <div style="font-size:11px;color:var(--text-muted);">Badge: {{ d.badge }}</div>
+        </div>
+        <span class="pill
+          {% if d.stato == 'in servizio' %}pill-green
+          {% elif d.stato == 'sospeso' %}pill-red
+          {% elif d.stato == 'ferie' or d.stato == 'congedo' %}pill-yellow
+          {% else %}pill-gray{% endif %}">
+          {{ d.stato | title }}
+        </span>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <span style="font-size:11px;color:var(--text-muted);">Sanzioni:</span>
+        {% if d.sanzioni and d.sanzioni|length > 0 %}
+          <span class="pill pill-red">⚠️ {{ d.sanzioni|length }}</span>
+        {% else %}
+          <span class="pill pill-green">✅ Nessuna</span>
+        {% endif %}
+      </div>
+
+      {% if user.permission >= 50 %}
+      <div style="display:flex;gap:8px;">
+        <button onclick="apriStato('{{ d._id }}','{{ d.stato }}')" class="btn btn-ghost btn-sm">⚙️ Stato</button>
+        {% if user.permission >= 100 %}
+        <button onclick="apriRuolo('{{ d._id }}','{{ d.ruolo }}')" class="btn btn-ghost btn-sm">🏷️ Ruolo</button>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    Nessun dipendente in questa categoria.
+  </p>
+  {% endif %}
+</div>
+
+<!-- Modale Stato -->
+<div id="modaleStato" class="modale-overlay">
+  <div class="modale">
+    <div class="modale-title">⚙️ Aggiorna Stato</div>
+    <input type="hidden" id="stato-id">
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Nuovo Stato</label>
+      <select id="stato-val" class="form-select">
+        <option value="in servizio">In Servizio</option>
+        <option value="fuori servizio">Fuori Servizio</option>
+        <option value="ferie">Ferie</option>
+        <option value="congedo">Congedo</option>
+        <option value="sospeso">Sospeso</option>
+      </select>
+    </div>
+    <div class="modale-footer">
+      <button onclick="salvaStato()" class="btn btn-primary">Salva</button>
+      <button onclick="chiudi('modaleStato')" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Ruolo -->
+<div id="modaleRuolo" class="modale-overlay">
+  <div class="modale">
+    <div class="modale-title">🏷️ Aggiorna Ruolo</div>
+    <input type="hidden" id="ruolo-id">
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Nuovo Ruolo</label>
+      <select id="ruolo-val" class="form-select">
+        <optgroup label="💼 Dirigenza">
+          {% for r in ruoli %} <option value="{{ r }}">{{ r }}</option> {% endfor %}
+        </optgroup>
+      </select>
+    </div>
+    <div class="modale-footer">
+      <button onclick="salvaRuolo()" class="btn btn-primary">Salva</button>
+      <button onclick="chiudi('modaleRuolo')" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function filtra(stato) {
+  document.querySelectorAll('.dip-card').forEach(c => {
+    c.style.display = (stato === 'tutti' || c.dataset.stato === stato) ? 'block' : 'none';
+  });
+}
+function apriStato(id, stato) {
+  document.getElementById('stato-id').value = id;
+  document.getElementById('stato-val').value = stato;
+  document.getElementById('modaleStato').classList.add('aperto');
+}
+function apriRuolo(id, ruolo) {
+  document.getElementById('ruolo-id').value = id;
+  document.getElementById('ruolo-val').value = ruolo;
+  document.getElementById('modaleRuolo').classList.add('aperto');
+}
+function chiudi(id) { document.getElementById(id).classList.remove('aperto'); }
+async function salvaStato() {
+  const fd = new FormData();
+  fd.append('dipendente_id', document.getElementById('stato-id').value);
+  fd.append('stato', document.getElementById('stato-val').value);
+  const r = await fetch('/dashboard/dipendenti/aggiorna-stato', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+async function salvaRuolo() {
+  const fd = new FormData();
+  fd.append('dipendente_id', document.getElementById('ruolo-id').value);
+  fd.append('ruolo', document.getElementById('ruolo-val').value);
+  const r = await fetch('/dashboard/utenti/aggiorna-ruolo', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Comunicati — Ospedale San Camillo{% endblock %}
+{% block page_title %}Comunicati{% endblock %}
+{% block breadcrumb %}Home / Comunicazioni / Comunicati{% endblock %}
+
+{% block content %}
+{% if user.permission >= 50 %}
+<div class="card">
+  <div class="card-title">📢 Nuovo Comunicato</div>
+  <form id="addForm" style="display:flex;flex-direction:column;gap:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Titolo</label>
+        <input name="titolo" class="form-input" placeholder="Titolo del comunicato...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priorità</label>
+        <select name="priority" class="form-select">
+          <option value="normale">🔵 Normale</option>
+          <option value="urgente">🟡 Urgente</option>
+          <option value="critico">🔴 Critico</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Destinatari</label>
+      <select name="destinatari" class="form-select">
+        <option value="Tutto il personale">👥 Tutto il personale</option>
+        <option value="Solo Dirigenza">💼 Solo Dirigenza</option>
+        <option value="Solo Reparto">💉 Solo Reparto</option>
+        <option value="Solo Tirocinio">🩺 Solo Tirocinio</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contenuto</label>
+      <textarea name="contenuto" class="form-textarea" rows="4" placeholder="Scrivi il comunicato..."></textarea>
+    </div>
+    <div>
+      <button type="button" onclick="addComunicato()" class="btn btn-primary">📢 Pubblica Comunicato</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title">📋 Comunicati Pubblicati</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"   class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtra('normale')" class="btn btn-ghost btn-sm">🔵 Normali</button>
+    <button onclick="filtra('urgente')" class="btn btn-ghost btn-sm">🟡 Urgenti</button>
+    <button onclick="filtra('critico')" class="btn btn-ghost btn-sm">🔴 Critici</button>
+  </div>
+
+  {% if comunicati %}
+    {% for c in comunicati %}
+    <div class="com-card" data-priority="{{ c.priority }}"
+      style="border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;
+      {% if c.priority == 'critico' %}border-left:4px solid var(--danger);
+      {% elif c.priority == 'urgente' %}border-left:4px solid var(--warning);
+      {% else %}border-left:4px solid var(--accent);{% endif %}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <strong style="color:var(--text-primary);font-size:15px;">{{ c.titolo }}</strong>
+        <div style="display:flex;gap:8px;align-items:center;">
+          {% if c.priority == 'critico' %}
+            <span class="pill pill-red">🔴 Critico</span>
+          {% elif c.priority == 'urgente' %}
+            <span class="pill pill-yellow">🟡 Urgente</span>
+          {% else %}
+            <span class="pill pill-blue">🔵 Normale</span>
+          {% endif %}
+          {% if c.destinatari %}
+          <span class="pill pill-gray">{{ c.destinatari }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;line-height:1.7;">{{ c.contenuto }}</p>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;">
+        <span>👤 {{ c.author }}</span>
+        <span>{{ c.timestamp }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    📭 Nessun comunicato pubblicato.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+function filtra(p) {
+  document.querySelectorAll('.com-card').forEach(c => {
+    c.style.display = (p === 'tutti' || c.dataset.priority === p) ? 'block' : 'none';
+  });
+}
+async function addComunicato() {
+  const fd = new FormData(document.getElementById('addForm'));
+  const r = await fetch('/dashboard/comunicati/add', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { alert(j.message); location.reload(); }
+  else { alert('Errore: ' + j.detail); }
+}
+</script>
+{% endblock %}

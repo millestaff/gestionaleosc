@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Ospedale San Camillo{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary:   #0f0a0a;
+      --bg-secondary: #1a0d0d;
+      --bg-card:      #1f1212;
+      --bg-hover:     #2a1515;
+      --accent:       #dc2626;
+      --accent-light: #ef4444;
+      --accent-glow:  rgba(220,38,38,.2);
+      --accent-soft:  rgba(220,38,38,.08);
+      --text-primary: #fef2f2;
+      --text-muted:   #6b4f4f;
+      --text-dim:     #a88080;
+      --border:       #2d1515;
+      --success:      #10b981;
+      --warning:      #f59e0b;
+      --danger:       #ef4444;
+      --white:        #ffffff;
+      --sidebar-w:    270px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); }
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 22px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .sidebar-logo .logo-icon {
+      width: 42px; height: 42px; background: var(--accent);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .sidebar-logo .logo-text { font-size: 13px; font-weight: 700; line-height: 1.3; }
+    .sidebar-logo small { color: var(--text-muted); font-size: 10px; font-weight: 400; }
+
+    .nav-section { padding: 14px 10px 6px; }
+    .nav-label {
+      font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--text-muted);
+      padding: 0 10px 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .nav-label::after { content:''; flex:1; height:1px; background:var(--border); }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 8px; margin-bottom: 1px;
+      color: var(--text-dim); font-size: 13px; font-weight: 500;
+      text-decoration: none; transition: all .15s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-soft); color: var(--accent-light); border-left-color: var(--accent); }
+    .nav-item .icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 14px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; overflow: hidden; flex-shrink: 0;
+      border: 2px solid var(--border);
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-info .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-info .role { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .logout-btn { color: var(--text-muted); font-size: 15px; text-decoration: none; padding: 4px; border-radius: 4px; transition: color .15s; }
+    .logout-btn:hover { color: var(--danger); }
+
+    /* ── MAIN ── */
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .topbar {
+      padding: 18px 28px; background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h1 { font-size: 19px; font-weight: 700; }
+    .topbar .breadcrumb { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .badge-pill {
+      padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      background: var(--accent-glow); color: var(--accent-light); border: 1px solid var(--accent-glow);
+    }
+    .content { padding: 28px; flex: 1; }
+
+    /* ── CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px; transition: border-color .2s, transform .2s;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: var(--accent); opacity: .5; }
+    .stat-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .stat-card .s-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+    .stat-card .s-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card .s-value { font-size: 30px; font-weight: 700; margin-top: 4px; color: var(--text-primary); }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 20px; }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 9px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* ── BUTTONS ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all .15s; font-family: inherit; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-light); }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent); }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+    /* ── PILLS ── */
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .pill-green  { background: rgba(16,185,129,.12); color: #10b981; border: 1px solid rgba(16,185,129,.2); }
+    .pill-yellow { background: rgba(245,158,11,.12);  color: #f59e0b; border: 1px solid rgba(245,158,11,.2); }
+    .pill-red    { background: rgba(220,38,38,.12);   color: #ef4444; border: 1px solid rgba(220,38,38,.2); }
+    .pill-blue   { background: rgba(59,130,246,.12);  color: #60a5fa; border: 1px solid rgba(59,130,246,.2); }
+    .pill-gray   { background: rgba(100,100,100,.12); color: #9ca3af; border: 1px solid rgba(100,100,100,.2); }
+
+    /* ── FORM ── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .form-input, .form-select, .form-textarea {
+      padding: 9px 12px; background: var(--bg-primary);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-primary); font-size: 13px; font-family: inherit;
+      transition: border-color .15s; width: 100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .form-textarea { resize: vertical; }
+
+    /* ── MODALE ── */
+    .modale-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.75); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modale-overlay.aperto { display: flex; }
+    .modale {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 28px; width: 440px; max-width: 95vw;
+    }
+    .modale-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+    .modale-footer { display: flex; gap: 10px; margin-top: 18px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🏥</div>
+      <div>
+        <div class="logo-text">Ospedale<br>San Camillo</div>
+        <small>Gestionale Interno</small>
+      </div>
+    </div>
+
+    <!-- Principale -->
+    <nav class="nav-section">
+      <div class="nav-label">Principale</div>
+      <a href="/dashboard"              class="nav-item {% if active_section=='dashboard' %}active{% endif %}"><span class="icon">📊</span> Dashboard</a>
+      <a href="/dashboard/storico"      class="nav-item {% if active_section=='storico' %}active{% endif %}"><span class="icon">📋</span> Storico</a>
+      <a href="/dashboard/statistiche"  class="nav-item {% if active_section=='statistiche' %}active{% endif %}"><span class="icon">📈</span> Statistiche</a>
+    </nav>
+
+    <!-- Personale -->
+    <nav class="nav-section">
+      <div class="nav-label">Personale</div>
+      <a href="/dashboard/dipendenti/dirigenza"  class="nav-item {% if active_section=='dirigenza' %}active{% endif %}"><span class="icon">💼</span> Dirigenza</a>
+      <a href="/dashboard/dipendenti/reparto"    class="nav-item {% if active_section=='reparto' %}active{% endif %}"><span class="icon">💉</span> Reparto</a>
+      <a href="/dashboard/dipendenti/tirocinio"  class="nav-item {% if active_section=='tirocinio' %}active{% endif %}"><span class="icon">🩺</span> Tirocinio</a>
+    </nav>
+
+    <!-- Operativo -->
+    <nav class="nav-section">
+      <div class="nav-label">Operativo</div>
+      <a href="/dashboard/pazienti"      class="nav-item {% if active_section=='pazienti' %}active{% endif %}"><span class="icon">🛏️</span> Pazienti</a>
+      <a href="/dashboard/documenti"     class="nav-item {% if active_section=='documenti' %}active{% endif %}"><span class="icon">📁</span> Documenti</a>
+      <a href="/dashboard/richiami"      class="nav-item {% if active_section=='richiami' %}active{% endif %}"><span class="icon">⚠️</span> Richiami</a>
+      <a href="/dashboard/segnalazioni"  class="nav-item {% if active_section=='segnalazioni' %}active{% endif %}"><span class="icon">🚨</span> Segnalazioni</a>
+    </nav>
+
+    <!-- Comunicazioni -->
+    <nav class="nav-section">
+      <div class="nav-label">Comunicazioni</div>
+      <a href="/dashboard/comunicati"    class="nav-item {% if active_section=='comunicati' %}active{% endif %}"><span class="icon">📢</span> Comunicati</a>
+      <a href="/dashboard/pec"           class="nav-item {% if active_section=='pec' %}active{% endif %}"><span class="icon">✉️</span> PEC</a>
+    </nav>
+
+    <!-- Gestione (solo Direttore) -->
+    {% if user.permission >= 100 %}
+    <nav class="nav-section">
+      <div class="nav-label">Gestione</div>
+      <a href="/dashboard/utenti"        class="nav-item {% if active_section=='utenti' %}active{% endif %}"><span class="icon">👤</span> Gestione Utenti</a>
+      <a href="/dashboard/dipendenti/add" class="nav-item {% if active_section=='add_dipendente' %}active{% endif %}"><span class="icon">➕</span> Aggiungi Dipendente</a>
+    </nav>
+    {% endif %}
+
+    <!-- Footer utente -->
+    <div class="sidebar-footer">
+      <div class="avatar">
+        {% if user.avatar %}
+          <img src="https://cdn.discordapp.com/avatars/{{ user.discord_id }}/{{ user.avatar }}.png" alt="">
+        {% else %}
+          {{ user.username[0].upper() }}
+        {% endif %}
+      </div>
+      <div class="user-info">
+        <div class="name">{{ user.username }}</div>
+        <div class="role">
+          {% if user.permission >= 100 %}🔴 Direttore
+          {% elif user.permission >= 50 %}🟡 Dirigenza
+          {% else %}🩺 Personale
+          {% endif %}
+        </div>
+      </div>
+      <a href="/auth/logout" class="logout-btn" title="Logout">⏏</a>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+        <div class="breadcrumb">{% block breadcrumb %}Home{% endblock %}</div>
+      </div>
+      <div class="topbar-right">
+        <span style="font-size:11px;color:var(--text-muted);">🏥 Ospedale San Camillo</span>
+        <span class="badge-pill">{{ user.username }}</span>
+      </div>
+    </div>
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

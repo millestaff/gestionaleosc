@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Ospedale San Camillo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent: #dc2626; --accent-light: #ef4444; --bg: #0f0a0a; --card: #1a0d0d; --border: #2d1515; --text: #fef2f2; --muted: #6b4f4f; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: var(--bg);
+      font-family: 'Inter', sans-serif; color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(220,38,38,.07) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(220,38,38,.05) 0%, transparent 50%);
+    }
+    .wrapper { text-align: center; max-width: 420px; width: 90%; }
+    .cross {
+      font-size: 56px; margin-bottom: 8px;
+      filter: drop-shadow(0 0 20px rgba(220,38,38,.4));
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{filter:drop-shadow(0 0 20px rgba(220,38,38,.4))} 50%{filter:drop-shadow(0 0 35px rgba(220,38,38,.7))} }
+    .hospital-name {
+      font-size: 26px; font-weight: 700; letter-spacing: -.02em;
+      background: linear-gradient(135deg, #fff 0%, #fca5a5 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+    .hospital-sub { font-size: 12px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 40px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 36px 32px;
+      box-shadow: 0 0 80px rgba(220,38,38,.1), 0 20px 60px rgba(0,0,0,.4);
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .card p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
+    .btn-discord {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      background: #5865f2; color: #fff; padding: 13px 32px; width: 100%;
+      border-radius: 10px; font-size: 14px; font-weight: 700;
+      text-decoration: none; transition: all .2s;
+      box-shadow: 0 4px 20px rgba(88,101,242,.3);
+    }
+    .btn-discord:hover { background: #4752c4; transform: translateY(-1px); box-shadow: 0 6px 25px rgba(88,101,242,.4); }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background: var(--border); }
+    .info-box {
+      background: rgba(220,38,38,.05); border: 1px solid rgba(220,38,38,.1);
+      border-radius: 10px; padding: 12px 16px;
+      font-size: 12px; color: var(--muted); line-height: 1.6; text-align: left;
+    }
+    .info-box strong { color: #fca5a5; }
+    footer { margin-top: 24px; font-size: 11px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="cross">🏥</div>
+    <div class="hospital-name">Ospedale San Camillo</div>
+    <div class="hospital-sub">Sistema di Gestione Interno</div>
+
+    <div class="card">
+      <h2>Accesso Riservato al Personale</h2>
+      <p>Utilizza il tuo account Discord associato al server per accedere al gestionale.</p>
+
+      <a href="/auth/login" class="btn-discord">
+        <svg width="20" height="20" viewBox="0 0 71 55" fill="none">
+          <path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.7a40.6 40.6 0 0 0-1.8 3.7 54.1 54.1 0 0 0-16.3 0A40.6 40.6 0 0 0 25.5.7 58.4 58.4 0 0 0 10.8 4.9C1.6 18.6-1 31.9.3 45.1a58.9 58.9 0 0 0 18 9.1 44.2 44.2 0 0 0 3.8-6.2 38.4 38.4 0 0 1-6-2.9l1.5-1.1a42 42 0 0 0 36 0l1.5 1.1a38.3 38.3 0 0 1-6 2.9 44.2 44.2 0 0 0 3.8 6.2 58.7 58.7 0 0 0 18.1-9.1C72.5 29.8 68.8 16.6 60 4.9ZM23.7 37c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2Zm23.5 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.6 0 6.4 3.2 6.4 7.2 0 4-2.8 7.2-6.4 7.2Z" fill="currentColor"/>
+        </svg>
+        Accedi con Discord
+      </a>
+
+      <div class="divider"><span>Informazioni accesso</span></div>
+
+      <div class="info-box">
+        <strong>👥 Chi può accedere?</strong><br>
+        Solo il personale del server Discord con un ruolo assegnato.<br><br>
+        <strong>🔴 Direttore</strong> — Accesso totale<br>
+        <strong>🟡 Dirigenza / Primari</strong> — Accesso medio<br>
+        <strong>🩺 Personale</strong> — Accesso base
+      </div>
+    </div>
+
+    <footer>© Ospedale San Camillo — Gestionale Interno v1.0</footer>
+  </div>
+</body>
+</html>

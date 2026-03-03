@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Segnalazioni — Ospedale San Camillo{% endblock %}
+{% block page_title %}Segnalazioni{% endblock %}
+{% block breadcrumb %}Home / Operativo / Segnalazioni{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">🚨 Nuova Segnalazione</div>
+  <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select name="tipo" class="form-select">
+        <option value="Incidente">🚑 Incidente</option>
+        <option value="Comportamento Scorretto">⚠️ Comportamento Scorretto</option>
+        <option value="Emergenza Medica">🏥 Emergenza Medica</option>
+        <option value="Problema Strutturale">🔧 Problema Strutturale</option>
+        <option value="Violazione Protocollo">📋 Violazione Protocollo</option>
+        <option value="Altro">📎 Altro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priorità</label>
+      <select name="priorita" class="form-select">
+        <option value="bassa">🟢 Bassa</option>
+        <option value="media">🔵 Media</option>
+        <option value="alta">🟡 Alta</option>
+        <option value="critica">🔴 Critica</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reparto</label>
+      <select name="reparto" class="form-select">
+        <option value="Pronto Soccorso">🚑 Pronto Soccorso</option>
+        <option value="Degenze">🛏️ Degenze</option>
+        <option value="Chirurgia">🔪 Chirurgia</option>
+        <option value="Laboratorio">🔬 Laboratorio</option>
+        <option value="Farmacia">💊 Farmacia</option>
+        <option value="Amministrazione">💼 Amministrazione</option>
+        <option value="Altro">📎 Altro</option>
+      </select>
+    </div>
+    <div class="form-group" style="grid-column:1/-1;">
+      <label class="form-label">Descrizione</label>
+      <textarea name="descrizione" class="form-textarea" rows="3" placeholder="Descrivi la segnalazione nel dettaglio..."></textarea>
+    </div>
+    <div style="grid-column:1/-1;">
+      <button type="button" onclick="addSegnalazione()" class="btn btn-primary">🚨 Invia Segnalazione</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-title">📋 Segnalazioni Registrate</div>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"      class="btn btn-ghost btn-sm">Tutte</button>
+    <button onclick="filtra('aperta')"     class="btn btn-ghost btn-sm">🔴 Aperte</button>
+    <button onclick="filtra('in gestione')"class="btn btn-ghost btn-sm">🟡 In Gestione</button>
+    <button onclick="filtra('chiusa')"     class="btn btn-ghost btn-sm">✅ Chiuse</button>
+  </div>
+
+  {% if items %}
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Tipo</th>
+        <th>Reparto</th>
+        <th>Descrizione</th>
+        <th>Priorità</th>
+        <th>Segnalato da</th>
+        <th>Stato</th>
+        {% if user.permission >= 50 %}<th>Azioni</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr class="segn-row" data-status="{{ item.status }}">
+        <td style="font-size:11px;color:var(--text-muted);">{{ item.timestamp }}</td>
+        <td><strong style="color:var(--text-primary)">{{ item.tipo }}</strong></td>
+        <td style="font-size:12px;">{{ item.reparto }}</td>
+        <td style="max-width:220px;font-size:12px;">{{ item.descrizione }}</td>
+        <td>
+          {% if item.priorita == 'critica' %}
+            <span class="pill pill-red">🔴 Critica</span>
+          {% elif item.priorita == 'alta' %}
+            <span class="pill pill-yellow">🟡 Alta</span>
+          {% elif item.priorita == 'media' %}
+            <span class="pill pill-blue">🔵 Media</span>
+          {% else %}
+            <span class="pill pill-green">🟢 Bassa</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px;">{{ item.author }}</td>
+        <td>
+          {% if item.status == 'aperta' %}
+            <span class="pill pill-red">Aperta</span>
+          {% elif item.status == 'in gestione' %}
+            <span class="pill pill-yellow">In Gestione</span>
+          {% else %}
+            <span class="pill pill-green">Chiusa</span>
+          {% endif %}
+        </td>
+        {% if user.permission >= 50 %}
+        <td style="display:flex;gap:6px;">
+          {% if item.status == 'aperta' %}
+          <button onclick="aggiornaStato('{{ item._id }}','in gestione')" class="btn btn-ghost btn-sm">🟡</button>
+          {% endif %}
+          {% if item.status != 'chiusa' %}
+          <button onclick="aggiornaStato('{{ item._id }}','chiusa')" class="btn btn-ghost btn-sm">✅</button>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    ✅ Nessuna segnalazione attiva.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+function filtra(stato) {
+  document.querySelectorAll('.segn-row').forEach(r => {
+    r.style.display = (stato === 'tutti' || r.dataset.status === stato) ? '' : 'none';
+  });
+}
+async function addSegnalazione() {
+  const fd = new FormData(document.getElementById('addForm'));
+  const r = await fetch('/dashboard/segnalazioni/add', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { alert(j.message); location.reload(); }
+  else { alert('Errore: ' + j.detail); }
+}
+async function aggiornaStato(id, stato) {
+  const fd = new FormData();
+  fd.append('segnalazione_id', id);
+  fd.append('status', stato);
+  const r = await fetch('/dashboard/segnalazioni/aggiorna', { method:'POST', body:fd });
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+</script>
+{% endblock %}
