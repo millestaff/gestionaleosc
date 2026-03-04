@@ -4,6 +4,7 @@
 {% block breadcrumb %}Home / Operativo / Pazienti{% endblock %}
 
 {% block content %}
+{% if not user.readonly %}
 <div class="card">
   <div class="card-title">🛏️ Registra Nuovo Paziente</div>
   <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
@@ -51,10 +52,10 @@
     </div>
   </form>
 </div>
+{% endif %}
 
 <div class="card">
   <div class="card-title">📋 Lista Pazienti</div>
-
   <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
     <button onclick="filtra('tutti')"           class="btn btn-ghost btn-sm">Tutti</button>
     <button onclick="filtra('ricoverato')"      class="btn btn-ghost btn-sm">🛏️ Ricoverati</button>
@@ -63,7 +64,6 @@
     <button onclick="filtra('dimesso')"         class="btn btn-ghost btn-sm">✅ Dimessi</button>
     <button onclick="filtra('deceduto')"        class="btn btn-ghost btn-sm">⬛ Deceduti</button>
   </div>
-
   {% if pazienti %}
   <table id="tabella">
     <thead>
@@ -74,7 +74,7 @@
         <th>Medico Ref.</th>
         <th>Stato</th>
         <th>Registrato</th>
-        {% if user.permission >= 50 %}<th>Azioni</th>{% endif %}
+        <th>Azioni</th>
       </tr>
     </thead>
     <tbody>
@@ -98,11 +98,16 @@
           {% endif %}
         </td>
         <td style="font-size:11px;color:var(--text-muted);">{{ p.timestamp }}<br>{{ p.registered_by }}</td>
-        {% if user.permission >= 50 %}
         <td>
-          <button onclick="apriStatus('{{ p._id }}','{{ p.status }}')" class="btn btn-ghost btn-sm">⚙️</button>
+          <div style="display:flex;gap:6px;">
+            {% if user.permission >= 50 and not user.readonly %}
+            <button onclick="apriStatus('{{ p._id }}','{{ p.status }}')" class="btn btn-ghost btn-sm">⚙️</button>
+            {% endif %}
+            {% if user.permission >= 100 and not user.readonly %}
+            <button onclick="eliminaPaziente('{{ p._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
+            {% endif %}
+          </div>
         </td>
-        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
@@ -162,6 +167,15 @@ async function salvaStatus() {
   const r = await fetch('/dashboard/pazienti/aggiorna-status', { method:'POST', body:fd });
   const j = await r.json();
   if (j.status === 'ok') { location.reload(); }
+}
+async function eliminaPaziente(id) {
+  if (!confirm('Confermi eliminazione definitiva del paziente?')) return;
+  const fd = new FormData();
+  fd.append('paziente_id', id);
+  const r = await fetch('/dashboard/pazienti/elimina', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+  else { alert('Errore: ' + (j.detail || j.message)); }
 }
 </script>
 {% endblock %}
