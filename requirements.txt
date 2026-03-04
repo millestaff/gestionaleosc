@@ -1,6 +1,6 @@
 fastapi==0.111.0
 uvicorn==0.29.0
-discord.py==2.4.0
+discord.py==2.3.2
 motor==3.4.0
 pymongo==4.7.2
 python-jose[cryptography]==3.3.0
@@ -9,3 +9,4 @@ python-dotenv==1.0.1
 jinja2==3.1.4
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.9
+audioop-lts==0.2.1
