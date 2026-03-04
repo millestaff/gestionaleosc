@@ -104,5 +104,13 @@ async function addDoc() {
   if (j.status === 'ok') { alert(j.message); location.reload(); }
   else { alert('Errore: ' + j.detail); }
 }
+async function eliminaDocumento(id) {
+  if (!confirm("Confermi eliminazione definitiva del documento?")) return;
+  const fd = new FormData();
+  fd.append("documento_id", id);
+  const r = await fetch("/dashboard/documenti/elimina", {method:"POST", body:fd});
+  const j = await r.json();
+  if (j.status === "ok") { location.reload(); }
+}
 </script>
 {% endblock %}
