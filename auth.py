@@ -8,7 +8,7 @@ from config import (
     DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET,
     DISCORD_REDIRECT_URI, DISCORD_API_BASE,
     DISCORD_GUILD_ID, SECRET_KEY, ROLE_PERMISSIONS,
-    RUOLI_DIRIGENZA, RUOLI_REPARTO, RUOLI_TIROCINIO,
+    RUOLI_DIRIGENZA, RUOLI_REPARTO,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -101,10 +101,8 @@ async def callback(request: Request, code: str):
             role_ids = member_data.get("roles", [])
             nick = member_data.get("nick") or nick
 
-    # Calcola permesso
     permission = calculate_permission(role_ids)
 
-    # Nessun ruolo riconosciuto
     if permission == 0:
         return templates.TemplateResponse("accesso_negato.html", {
             "request":  request,
@@ -113,24 +111,25 @@ async def callback(request: Request, code: str):
         }, status_code=403)
 
     discord_id = user["id"]
-
-    # Controlla se esiste già nel DB
     existing = await db["dipendenti"].find_one({"discord_id": discord_id})
 
     if existing:
-        # Utente già registrato — controlla stato approvazione
         if existing.get("approvato") == False:
             return templates.TemplateResponse("accesso_negato.html", {
                 "request":  request,
                 "username": user.get("username", ""),
                 "motivo":   "Il tuo account è in attesa di approvazione da parte del Direttore."
             }, status_code=403)
+        # Aggiorna role_ids nel DB ad ogni login
+        await db["dipendenti"].update_one(
+            {"discord_id": discord_id},
+            {"$set": {"role_ids": role_ids, "permission": permission}}
+        )
     else:
-        # Primo accesso — salva come "in attesa"
         ruolo = get_role_name(role_ids)
         if ruolo == "Direttore":
             categoria = "dirigenza"
-            approvato = True  # Il Direttore approva se stesso
+            approvato = True
         elif ruolo == "Dirigenza":
             categoria = "dirigenza"
             approvato = False
@@ -148,24 +147,23 @@ async def callback(request: Request, code: str):
             "badge":       "—",
             "stato":       "in servizio",
             "approvato":   approvato,
+            "permission":  permission,
+            "role_ids":    role_ids,
             "sanzioni":    [],
             "note":        "Registrato automaticamente al primo accesso",
             "added_by":    "Sistema",
             "timestamp":   datetime.now().strftime("%d/%m/%Y %H:%M"),
         })
 
-        # Notifica Discord al Direttore
         if not approvato:
             try:
                 await notify_direttore(db, discord_id, user.get("username"), ruolo)
             except Exception:
                 pass
-
-        if not approvato:
             return templates.TemplateResponse("accesso_negato.html", {
                 "request":  request,
                 "username": user.get("username", ""),
-                "motivo":   "Il tuo account è stato registrato ed è in attesa di approvazione da parte del Direttore."
+                "motivo":   "Il tuo account è stato registrato ed è in attesa di approvazione."
             }, status_code=403)
 
     session_data = {
@@ -178,51 +176,49 @@ async def callback(request: Request, code: str):
     token = create_session_token(session_data)
     redirect = RedirectResponse(url="/dashboard")
     redirect.set_cookie(
-        key=COOKIE_NAME,
-        value=token,
-        httponly=True,
-        samesite="lax",
+        key=COOKIE_NAME, value=token,
+        httponly=True, samesite="lax",
         max_age=JWT_EXPIRE_HOURS * 3600,
     )
     return redirect
 
 
 async def notify_direttore(db, discord_id: str, username: str, ruolo: str):
-    """Invia un messaggio Discord al Direttore tramite il bot."""
-    import discord as discord_lib
-    from bot.cogs import get_bot
-    bot = get_bot()
-    if not bot:
-        return
-    guild = bot.get_guild(DISCORD_GUILD_ID)
-    if not guild:
-        return
-    # Trova il Direttore
-    from config import ROLE_PERMISSIONS
-    direttore_role_id = None
-    for rid, lvl in ROLE_PERMISSIONS.items():
-        if lvl == 100:
-            direttore_role_id = int(rid)
-            break
-    if not direttore_role_id:
-        return
-    role = guild.get_role(direttore_role_id)
-    if not role:
-        return
-    for member in role.members:
-        try:
-            embed = discord_lib.Embed(
-                title="🏥 Nuovo accesso in attesa di approvazione",
-                color=0xdc2626,
-                timestamp=datetime.utcnow(),
-            )
-            embed.add_field(name="👤 Utente", value=f"{username} (<@{discord_id}>)", inline=False)
-            embed.add_field(name="🏷️ Ruolo rilevato", value=ruolo, inline=True)
-            embed.add_field(name="✅ Azione richiesta", value="Vai su Gestione Utenti per approvare o rifiutare.", inline=False)
-            embed.set_footer(text="Ospedale San Camillo — Gestionale Interno")
-            await member.send(embed=embed)
-        except Exception:
-            pass
+    try:
+        from bot.cogs import get_bot
+        import discord as discord_lib
+        bot = get_bot()
+        if not bot:
+            return
+        guild = bot.get_guild(int(DISCORD_GUILD_ID))
+        if not guild:
+            return
+        direttore_role_id = None
+        for rid, lvl in ROLE_PERMISSIONS.items():
+            if lvl == 100:
+                direttore_role_id = int(rid)
+                break
+        if not direttore_role_id:
+            return
+        role = guild.get_role(direttore_role_id)
+        if not role:
+            return
+        for member in role.members:
+            try:
+                embed = discord_lib.Embed(
+                    title="🏥 Nuovo accesso in attesa di approvazione",
+                    color=0xdc2626,
+                    timestamp=datetime.utcnow(),
+                )
+                embed.add_field(name="👤 Utente", value=f"{username} (<@{discord_id}>)", inline=False)
+                embed.add_field(name="🏷️ Ruolo rilevato", value=ruolo, inline=True)
+                embed.add_field(name="✅ Azione richiesta", value="Vai su Gestione Utenti per approvare.", inline=False)
+                embed.set_footer(text="Ospedale San Camillo — Gestionale Interno")
+                await member.send(embed=embed)
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 
 @router.get("/logout")
@@ -237,13 +233,41 @@ def get_current_user(request: Request) -> dict:
     if not token:
         raise HTTPException(status_code=401, detail="Non autenticato.")
     try:
-        return decode_session_token(token)
+        data = decode_session_token(token)
+        return data
     except JWTError:
         raise HTTPException(status_code=401, detail="Sessione scaduta.")
 
 
+async def get_current_user_live(request: Request) -> dict:
+    """
+    Versione live: legge i permessi aggiornati dal DB ad ogni richiesta.
+    Usa questa per le route critiche.
+    """
+    token = request.cookies.get(COOKIE_NAME)
+    if not token:
+        raise HTTPException(status_code=401, detail="Non autenticato.")
+    try:
+        data = decode_session_token(token)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Sessione scaduta.")
+
+    from database import get_db
+    db = get_db()
+    discord_id = data.get("discord_id")
+    dipendente = await db["dipendenti"].find_one({"discord_id": discord_id})
+    if dipendente:
+        data["permission"] = dipendente.get("permission", data.get("permission", 0))
+        data["ruolo"] = dipendente.get("ruolo", "")
+        data["categoria"] = dipendente.get("categoria", "")
+        if dipendente.get("approvato") == False:
+            raise HTTPException(status_code=403, detail="Account non approvato.")
+    return data
+
+
 def require_permission(min_level: int):
-    def checker(user: dict = Depends(get_current_user)) -> dict:
+    async def checker(request: Request) -> dict:
+        user = await get_current_user_live(request)
         if user.get("permission", 0) < min_level:
             raise HTTPException(
                 status_code=403,
