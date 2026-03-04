@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
-from auth import get_current_user, require_permission
+from auth import get_current_user, require_permission, require_write
 from database import get_db
 from config import TUTTI_RUOLI, RUOLI_DIRIGENZA, RUOLI_REPARTO, RUOLI_TIROCINIO
 

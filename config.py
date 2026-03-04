@@ -7,7 +7,7 @@ DISCORD_CLIENT_ID     = os.getenv("DISCORD_CLIENT_ID", "")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
 DISCORD_BOT_TOKEN     = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_GUILD_ID      = int(os.getenv("DISCORD_GUILD_ID", "0"))
-DISCORD_REDIRECT_URI  = os.getenv("DISCORD_REDIRECT_URI", "https://gestionaleosc.onrender.com/callback")
+DISCORD_REDIRECT_URI  = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8000/auth/callback")
 
 DISCORD_API_BASE = "https://discord.com/api/v10"
 
@@ -19,6 +19,10 @@ APP_HOST   = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT   = int(os.getenv("APP_PORT", "8000"))
 
 OSPEDALE_NOME = "Ospedale San Camillo"
+
+# Ruoli con accesso totale ma sola lettura (solo segnalazioni consentite)
+ROLE_READONLY_IDS = {os.getenv("ROLE_STAFF", "")}
+ROLE_READONLY_IDS.discard("")
 
 ROLE_PERMISSIONS: dict[str, int] = {
     os.getenv("ROLE_STAFF",           ""): 100,
@@ -36,8 +40,10 @@ ROLE_PERMISSIONS: dict[str, int] = {
 }
 ROLE_PERMISSIONS = {k: v for k, v in ROLE_PERMISSIONS.items() if k}
 
+# ID del ruolo Direttore puro (non Staff)
+ROLE_DIRETTORE_ID = os.getenv("ROLE_DIRETTORE", "")
+
 RUOLI_DIRIGENZA = [
-    "Staff di OblivionMC",
     "Direttore",
     "Responsabile Assunzione e Formazione",
     "Responsabile Farmacia",
@@ -55,3 +61,17 @@ RUOLI_TIROCINIO = [
     "Medico Tirocinante",
 ]
 TUTTI_RUOLI = RUOLI_DIRIGENZA + RUOLI_REPARTO + RUOLI_TIROCINIO
+
+PEC_DESTINATARI = [
+    # Reparti clinici
+    "Pronto Soccorso",
+    "Reparto Degenze",
+    "Chirurgia",
+    "Laboratorio Analisi",
+    "Farmacia",
+    "Amministrazione",
+    # Categorie personale
+    "Dirigenza",
+    "Reparto Medici",
+    "Tirocinio",
+]

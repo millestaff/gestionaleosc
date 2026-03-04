@@ -9,6 +9,7 @@ from config import (
     DISCORD_REDIRECT_URI, DISCORD_API_BASE,
     DISCORD_GUILD_ID, SECRET_KEY, ROLE_PERMISSIONS,
     RUOLI_DIRIGENZA, RUOLI_REPARTO,
+    ROLE_READONLY_IDS, ROLE_DIRETTORE_ID,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -34,6 +35,24 @@ def calculate_permission(role_ids: list[str]) -> int:
     for role_id in role_ids:
         level = max(level, ROLE_PERMISSIONS.get(role_id, 0))
     return level
+
+
+def is_readonly(role_ids: list[str]) -> bool:
+    """
+    Readonly se ha ROLE_STAFF ma NON ha ROLE_DIRETTORE
+    e NON ha nessun ruolo medico (permesso > 0 escludendo staff).
+    Se ha anche un ruolo medico, NON è readonly.
+    """
+    has_staff = any(rid in ROLE_READONLY_IDS for rid in role_ids)
+    if not has_staff:
+        return False
+    has_direttore = ROLE_DIRETTORE_ID and ROLE_DIRETTORE_ID in role_ids
+    if has_direttore:
+        return False
+    # Controlla se ha anche ruoli medici
+    medical_roles = {k for k, v in ROLE_PERMISSIONS.items() if k not in ROLE_READONLY_IDS}
+    has_medical = any(rid in medical_roles for rid in role_ids)
+    return not has_medical
 
 
 def get_role_name(role_ids: list[str]) -> str:
@@ -110,6 +129,7 @@ async def callback(request: Request, code: str):
             "motivo":   "Il tuo account Discord non ha nessun ruolo autorizzato. Contatta il Direttore."
         }, status_code=403)
 
+    readonly = is_readonly(role_ids)
     discord_id = user["id"]
     existing = await db["dipendenti"].find_one({"discord_id": discord_id})
 
@@ -120,22 +140,24 @@ async def callback(request: Request, code: str):
                 "username": user.get("username", ""),
                 "motivo":   "Il tuo account è in attesa di approvazione da parte del Direttore."
             }, status_code=403)
-        # Aggiorna role_ids nel DB ad ogni login
         await db["dipendenti"].update_one(
             {"discord_id": discord_id},
-            {"$set": {"role_ids": role_ids, "permission": permission}}
+            {"$set": {
+                "role_ids":  role_ids,
+                "permission": permission,
+                "readonly":  readonly,
+            }}
         )
     else:
         ruolo = get_role_name(role_ids)
-        if ruolo == "Direttore":
+        # Approvazione automatica per permesso 100
+        approvato = permission == 100
+        if ruolo == "Direttore" or permission == 100:
             categoria = "dirigenza"
-            approvato = True
         elif ruolo == "Dirigenza":
             categoria = "dirigenza"
-            approvato = False
         else:
             categoria = "tirocinio"
-            approvato = False
 
         await db["dipendenti"].insert_one({
             "discord_id":  discord_id,
@@ -148,6 +170,7 @@ async def callback(request: Request, code: str):
             "stato":       "in servizio",
             "approvato":   approvato,
             "permission":  permission,
+            "readonly":    readonly,
             "role_ids":    role_ids,
             "sanzioni":    [],
             "note":        "Registrato automaticamente al primo accesso",
@@ -172,6 +195,7 @@ async def callback(request: Request, code: str):
         "avatar":     user.get("avatar"),
         "role_ids":   role_ids,
         "permission": permission,
+        "readonly":   readonly,
     }
     token = create_session_token(session_data)
     redirect = RedirectResponse(url="/dashboard")
@@ -195,7 +219,7 @@ async def notify_direttore(db, discord_id: str, username: str, ruolo: str):
             return
         direttore_role_id = None
         for rid, lvl in ROLE_PERMISSIONS.items():
-            if lvl == 100:
+            if lvl == 100 and rid != list(ROLE_READONLY_IDS)[0] if ROLE_READONLY_IDS else True:
                 direttore_role_id = int(rid)
                 break
         if not direttore_role_id:
@@ -233,17 +257,12 @@ def get_current_user(request: Request) -> dict:
     if not token:
         raise HTTPException(status_code=401, detail="Non autenticato.")
     try:
-        data = decode_session_token(token)
-        return data
+        return decode_session_token(token)
     except JWTError:
         raise HTTPException(status_code=401, detail="Sessione scaduta.")
 
 
 async def get_current_user_live(request: Request) -> dict:
-    """
-    Versione live: legge i permessi aggiornati dal DB ad ogni richiesta.
-    Usa questa per le route critiche.
-    """
     token = request.cookies.get(COOKIE_NAME)
     if not token:
         raise HTTPException(status_code=401, detail="Non autenticato.")
@@ -251,15 +270,15 @@ async def get_current_user_live(request: Request) -> dict:
         data = decode_session_token(token)
     except JWTError:
         raise HTTPException(status_code=401, detail="Sessione scaduta.")
-
     from database import get_db
     db = get_db()
     discord_id = data.get("discord_id")
     dipendente = await db["dipendenti"].find_one({"discord_id": discord_id})
     if dipendente:
         data["permission"] = dipendente.get("permission", data.get("permission", 0))
-        data["ruolo"] = dipendente.get("ruolo", "")
-        data["categoria"] = dipendente.get("categoria", "")
+        data["readonly"]   = dipendente.get("readonly", False)
+        data["ruolo"]      = dipendente.get("ruolo", "")
+        data["categoria"]  = dipendente.get("categoria", "")
         if dipendente.get("approvato") == False:
             raise HTTPException(status_code=403, detail="Account non approvato.")
     return data
@@ -269,9 +288,16 @@ def require_permission(min_level: int):
     async def checker(request: Request) -> dict:
         user = await get_current_user_live(request)
         if user.get("permission", 0) < min_level:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Accesso negato. Livello richiesto: {min_level}."
-            )
+            raise HTTPException(status_code=403, detail=f"Accesso negato. Livello richiesto: {min_level}.")
+        return user
+    return checker
+
+
+def require_write(action: str = "modificare"):
+    """Blocca utenti readonly tranne per le segnalazioni."""
+    async def checker(request: Request) -> dict:
+        user = await get_current_user_live(request)
+        if user.get("readonly") and action != "segnalazione":
+            raise HTTPException(status_code=403, detail="Accesso in sola lettura.")
         return user
     return checker

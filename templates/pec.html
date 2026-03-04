@@ -4,123 +4,133 @@
 {% block breadcrumb %}Home / Comunicazioni / PEC{% endblock %}
 
 {% block content %}
+{% if not user.readonly %}
 <div class="card">
   <div class="card-title">✉️ Nuova PEC</div>
-  <form id="addForm" style="display:flex;flex-direction:column;gap:16px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="form-group">
-        <label class="form-label">Destinatario</label>
-        <select name="destinatario" class="form-select">
-          <option value="">-- Seleziona destinatario --</option>
-          <optgroup label="👥 Dipendenti">
-            {% for d in dipendenti %}
-            <option value="{{ d.nome }} {{ d.cognome }} ({{ d.ruolo }})">
-              {{ d.nome }} {{ d.cognome }} — {{ d.ruolo }}
-            </option>
-            {% endfor %}
-          </optgroup>
-          <optgroup label="🏛️ Enti Esterni">
-            <option value="Direzione Sanitaria Regionale">Direzione Sanitaria Regionale</option>
-            <option value="ASL Territoriale">ASL Territoriale</option>
-            <option value="Ministero della Salute">Ministero della Salute</option>
-            <option value="INPS">INPS</option>
-            <option value="Tribunale">Tribunale</option>
-            <option value="Forze dell'Ordine">Forze dell'Ordine</option>
-            <option value="Altro Ente">Altro Ente</option>
-          </optgroup>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Oggetto</label>
-        <input name="oggetto" class="form-input" placeholder="Oggetto della PEC...">
-      </div>
+  <form id="pecForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div class="form-group">
+      <label class="form-label">Destinatario</label>
+      <select name="destinatario" class="form-select">
+        <optgroup label="👤 Singoli Medici">
+          {% for d in dipendenti %}
+          <option value="{{ d.nome }} {{ d.cognome }} ({{ d.ruolo }})">
+            {{ d.nome }} {{ d.cognome }} — {{ d.ruolo }}
+          </option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="🏥 Reparti Clinici">
+          <option value="Pronto Soccorso">🚨 Pronto Soccorso</option>
+          <option value="Reparto Degenze">🛏️ Reparto Degenze</option>
+          <option value="Chirurgia">🔪 Chirurgia</option>
+          <option value="Laboratorio Analisi">🔬 Laboratorio Analisi</option>
+          <option value="Farmacia">💊 Farmacia</option>
+          <option value="Amministrazione">📋 Amministrazione</option>
+        </optgroup>
+        <optgroup label="👥 Categorie Personale">
+          <option value="Tutto il Personale">👥 Tutto il Personale</option>
+          <option value="Dirigenza">💼 Dirigenza</option>
+          <option value="Reparto Medici">💉 Reparto Medici</option>
+          <option value="Tirocinio">🩺 Tirocinio</option>
+        </optgroup>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Priorità</label>
       <select name="priorita" class="form-select">
-        <option value="normale">🔵 Normale</option>
-        <option value="urgente">🟡 Urgente</option>
-        <option value="riservata">🔴 Riservata</option>
+        <option value="normale">📧 Normale</option>
+        <option value="urgente">⚡ Urgente</option>
+        <option value="riservata">🔒 Riservata</option>
       </select>
     </div>
-    <div class="form-group">
-      <label class="form-label">Corpo del Messaggio</label>
-      <textarea name="corpo" class="form-textarea" rows="5" placeholder="Scrivi il testo della PEC..."></textarea>
+    <div class="form-group" style="grid-column:1/-1;">
+      <label class="form-label">Oggetto</label>
+      <input name="oggetto" class="form-input" placeholder="Oggetto della PEC...">
     </div>
-    <div>
+    <div class="form-group" style="grid-column:1/-1;">
+      <label class="form-label">Corpo</label>
+      <textarea name="corpo" class="form-textarea" rows="5" placeholder="Contenuto della PEC..."></textarea>
+    </div>
+    <div style="grid-column:1/-1;">
       <button type="button" onclick="sendPec()" class="btn btn-primary">✉️ Invia PEC</button>
     </div>
   </form>
 </div>
+{% endif %}
 
 <div class="card">
   <div class="card-title">📬 PEC Inviate</div>
-
-  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-    <button onclick="filtra('tutti')"    class="btn btn-ghost btn-sm">Tutte</button>
-    <button onclick="filtra('normale')"  class="btn btn-ghost btn-sm">🔵 Normali</button>
-    <button onclick="filtra('urgente')"  class="btn btn-ghost btn-sm">🟡 Urgenti</button>
-    <button onclick="filtra('riservata')"class="btn btn-ghost btn-sm">🔴 Riservate</button>
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')"   class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtra('urgente')" class="btn btn-ghost btn-sm">⚡ Urgenti</button>
+    <button onclick="filtra('riservata')" class="btn btn-ghost btn-sm">🔒 Riservate</button>
+    <button onclick="filtra('normale')" class="btn btn-ghost btn-sm">📧 Normali</button>
   </div>
-
   {% if pec_list %}
   <table>
     <thead>
       <tr>
         <th>Data</th>
-        <th>Mittente</th>
         <th>Destinatario</th>
         <th>Oggetto</th>
         <th>Priorità</th>
+        <th>Mittente</th>
         <th>Stato</th>
+        {% if user.permission >= 100 and not user.readonly %}<th>Azioni</th>{% endif %}
       </tr>
     </thead>
     <tbody>
-      {% for pec in pec_list %}
-      <tr class="pec-row" data-priorita="{{ pec.priorita or 'normale' }}">
-        <td style="font-size:11px;color:var(--text-muted);">{{ pec.timestamp }}</td>
-        <td><strong style="color:var(--text-primary)">{{ pec.mittente }}</strong></td>
-        <td style="font-size:12px;">{{ pec.destinatario }}</td>
-        <td style="font-size:12px;">{{ pec.oggetto }}</td>
+      {% for p in pec_list %}
+      <tr class="pec-row" data-priorita="{{ p.priorita }}">
+        <td style="font-size:11px;color:var(--text-muted);">{{ p.timestamp }}</td>
+        <td><strong style="color:var(--text-primary)">{{ p.destinatario }}</strong></td>
+        <td style="max-width:200px;font-size:12px;">{{ p.oggetto }}</td>
         <td>
-          {% if pec.priorita == 'riservata' %}
-            <span class="pill pill-red">🔴 Riservata</span>
-          {% elif pec.priorita == 'urgente' %}
-            <span class="pill pill-yellow">🟡 Urgente</span>
+          {% if p.priorita == 'urgente' %}
+            <span class="pill pill-red">⚡ Urgente</span>
+          {% elif p.priorita == 'riservata' %}
+            <span class="pill pill-yellow">🔒 Riservata</span>
           {% else %}
-            <span class="pill pill-blue">🔵 Normale</span>
+            <span class="pill pill-blue">📧 Normale</span>
           {% endif %}
         </td>
+        <td style="font-size:12px;">{{ p.mittente }}</td>
+        <td><span class="pill pill-green">✅ Inviata</span></td>
+        {% if user.permission >= 100 and not user.readonly %}
         <td>
-          {% if pec.stato == 'inviata' %}
-            <span class="pill pill-green">✅ Inviata</span>
-          {% else %}
-            <span class="pill pill-yellow">⏳ In Attesa</span>
-          {% endif %}
+          <button onclick="eliminaPec('{{ p._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
   <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
-    📭 Nessuna PEC inviata.
+    Nessuna PEC inviata.
   </p>
   {% endif %}
 </div>
 
 <script>
-function filtra(p) {
+function filtra(priorita) {
   document.querySelectorAll('.pec-row').forEach(r => {
-    r.style.display = (p === 'tutti' || r.dataset.priorita === p) ? '' : 'none';
+    r.style.display = (priorita === 'tutti' || r.dataset.priorita === priorita) ? '' : 'none';
   });
 }
 async function sendPec() {
-  const fd = new FormData(document.getElementById('addForm'));
-  const r = await fetch('/dashboard/pec/send', { method:'POST', body:fd });
+  const fd = new FormData(document.getElementById('pecForm'));
+  const r = await fetch('/dashboard/pec/send', {method:'POST', body:fd});
   const j = await r.json();
   if (j.status === 'ok') { alert(j.message); location.reload(); }
   else { alert('Errore: ' + j.detail); }
+}
+async function eliminaPec(id) {
+  if (!confirm('Confermi eliminazione definitiva della PEC?')) return;
+  const fd = new FormData();
+  fd.append('pec_id', id);
+  const r = await fetch('/dashboard/pec/elimina', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
 }
 </script>
 {% endblock %}
