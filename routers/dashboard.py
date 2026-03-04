@@ -9,17 +9,26 @@ from config import TUTTI_RUOLI, RUOLI_DIRIGENZA, RUOLI_REPARTO, RUOLI_TIROCINIO
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 templates = Jinja2Templates(directory="templates")
 
+CATEGORIE_BASE = ["cartella_clinica", "referto"]
+CATEGORIE_TUTTE = ["cartella_clinica", "referto", "verbale", "rapporto", "regolamento", "modulo", "protocollo", "altro"]
+
 
 # ── DASHBOARD ─────────────────────────────────────────────────────────────────
 @router.get("/", response_class=HTMLResponse)
 async def dashboard_home(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
+    discord_id = user.get("discord_id")
+    richiami_personali = await db["richiami"].count_documents({
+        "discord_id": discord_id, "status": "attivo"
+    })
     stats = {
-        "dipendenti_totali": await db["dipendenti"].count_documents({}),
+        "dipendenti_totali": await db["dipendenti"].count_documents({"approvato": True}),
         "pazienti_attivi":   await db["pazienti"].count_documents({"status": "ricoverato"}),
         "documenti":         await db["documenti"].count_documents({}),
         "richiami_attivi":   await db["richiami"].count_documents({"status": "attivo"}),
         "segnalazioni":      await db["segnalazioni"].count_documents({"status": "aperta"}),
         "comunicati":        await db["comunicati"].count_documents({}),
+        "richiami_personali": richiami_personali,
+        "in_attesa":         await db["dipendenti"].count_documents({"approvato": False}) if user.get("permission", 0) >= 100 else 0,
     }
     return templates.TemplateResponse("dashboard.html", {
         "request": request, "user": user,
@@ -30,7 +39,7 @@ async def dashboard_home(request: Request, user: dict = Depends(get_current_user
 # ── DIPENDENTI ────────────────────────────────────────────────────────────────
 @router.get("/dipendenti/dirigenza", response_class=HTMLResponse)
 async def dipendenti_dirigenza(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
-    lista = await db["dipendenti"].find({"categoria": "dirigenza"}).to_list(100)
+    lista = await db["dipendenti"].find({"categoria": "dirigenza", "approvato": True}).to_list(100)
     return templates.TemplateResponse("dipendenti.html", {
         "request": request, "user": user,
         "dipendenti": lista, "categoria": "Dirigenza",
@@ -39,7 +48,7 @@ async def dipendenti_dirigenza(request: Request, user: dict = Depends(get_curren
 
 @router.get("/dipendenti/reparto", response_class=HTMLResponse)
 async def dipendenti_reparto(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
-    lista = await db["dipendenti"].find({"categoria": "reparto"}).to_list(100)
+    lista = await db["dipendenti"].find({"categoria": "reparto", "approvato": True}).to_list(100)
     return templates.TemplateResponse("dipendenti.html", {
         "request": request, "user": user,
         "dipendenti": lista, "categoria": "Reparto",
@@ -48,7 +57,7 @@ async def dipendenti_reparto(request: Request, user: dict = Depends(get_current_
 
 @router.get("/dipendenti/tirocinio", response_class=HTMLResponse)
 async def dipendenti_tirocinio(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
-    lista = await db["dipendenti"].find({"categoria": "tirocinio"}).to_list(100)
+    lista = await db["dipendenti"].find({"categoria": "tirocinio", "approvato": True}).to_list(100)
     return templates.TemplateResponse("dipendenti.html", {
         "request": request, "user": user,
         "dipendenti": lista, "categoria": "Tirocinio",
@@ -83,6 +92,7 @@ async def add_dipendente(request: Request, user: dict = Depends(require_permissi
         "categoria":   categoria,
         "badge":       form.get("badge"),
         "stato":       form.get("stato", "in servizio"),
+        "approvato":   True,
         "sanzioni":    [],
         "note":        form.get("note", ""),
         "added_by":    user["username"],
@@ -105,7 +115,7 @@ async def aggiorna_stato_dipendente(request: Request, user: dict = Depends(requi
 @router.get("/pazienti", response_class=HTMLResponse)
 async def pazienti(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     lista = await db["pazienti"].find().sort("timestamp", -1).to_list(100)
-    dipendenti = await db["dipendenti"].find().to_list(100)
+    dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
     return templates.TemplateResponse("pazienti.html", {
         "request": request, "user": user,
         "pazienti": lista, "dipendenti": dipendenti,
@@ -143,20 +153,31 @@ async def aggiorna_status_paziente(request: Request, user: dict = Depends(get_cu
 @router.get("/documenti", response_class=HTMLResponse)
 async def documenti(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     categoria = request.query_params.get("categoria", "tutti")
+    permission = user.get("permission", 0)
+    categorie_disponibili = CATEGORIE_TUTTE if permission >= 50 else CATEGORIE_BASE
+    if categoria != "tutti" and categoria not in categorie_disponibili:
+        categoria = "tutti"
     query = {} if categoria == "tutti" else {"categoria": categoria}
+    if permission < 50:
+        query["categoria"] = {"$in": CATEGORIE_BASE}
     docs = await db["documenti"].find(query).sort("timestamp", -1).to_list(100)
     return templates.TemplateResponse("documenti.html", {
         "request": request, "user": user,
         "docs": docs, "categoria_attiva": categoria,
+        "categorie_disponibili": categorie_disponibili,
         "active_section": "documenti",
     })
 
 @router.post("/documenti/add")
 async def add_documento(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     form = await request.form()
+    categoria = form.get("categoria")
+    permission = user.get("permission", 0)
+    if permission < 50 and categoria not in CATEGORIE_BASE:
+        return {"status": "error", "message": "Non hai i permessi per inserire questa categoria."}
     await db["documenti"].insert_one({
         "titolo":      form.get("titolo"),
-        "categoria":   form.get("categoria"),
+        "categoria":   categoria,
         "contenuto":   form.get("contenuto"),
         "riferimento": form.get("riferimento", ""),
         "author":      user["username"],
@@ -167,9 +188,16 @@ async def add_documento(request: Request, user: dict = Depends(get_current_user)
 
 # ── RICHIAMI ──────────────────────────────────────────────────────────────────
 @router.get("/richiami", response_class=HTMLResponse)
-async def richiami(request: Request, user: dict = Depends(require_permission(50)), db=Depends(get_db)):
-    lista = await db["richiami"].find().sort("timestamp", -1).to_list(100)
-    dipendenti = await db["dipendenti"].find().to_list(100)
+async def richiami(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
+    permission = user.get("permission", 0)
+    discord_id = user.get("discord_id")
+    dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
+
+    if permission >= 50:
+        lista = await db["richiami"].find().sort("timestamp", -1).to_list(100)
+    else:
+        lista = await db["richiami"].find({"discord_id": discord_id}).sort("timestamp", -1).to_list(100)
+
     return templates.TemplateResponse("richiami.html", {
         "request": request, "user": user,
         "richiami": lista, "dipendenti": dipendenti,
@@ -210,6 +238,13 @@ async def chiudi_richiamo(request: Request, user: dict = Depends(require_permiss
     )
     return {"status": "ok", "message": "Richiamo chiuso."}
 
+@router.post("/richiami/elimina")
+async def elimina_richiamo(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["richiami"].delete_one({"_id": ObjectId(form.get("richiamo_id"))})
+    return {"status": "ok", "message": "Richiamo eliminato."}
+
 
 # ── SEGNALAZIONI ──────────────────────────────────────────────────────────────
 @router.get("/segnalazioni", response_class=HTMLResponse)
@@ -234,6 +269,16 @@ async def add_segnalazione(request: Request, user: dict = Depends(get_current_us
     })
     return {"status": "ok", "message": "Segnalazione inviata."}
 
+@router.post("/segnalazioni/aggiorna")
+async def aggiorna_segnalazione(request: Request, user: dict = Depends(require_permission(50)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["segnalazioni"].update_one(
+        {"_id": ObjectId(form.get("segnalazione_id"))},
+        {"$set": {"status": form.get("status")}}
+    )
+    return {"status": "ok", "message": "Segnalazione aggiornata."}
+
 
 # ── COMUNICATI ────────────────────────────────────────────────────────────────
 @router.get("/comunicati", response_class=HTMLResponse)
@@ -248,11 +293,12 @@ async def comunicati(request: Request, user: dict = Depends(get_current_user), d
 async def add_comunicato(request: Request, user: dict = Depends(require_permission(50)), db=Depends(get_db)):
     form = await request.form()
     await db["comunicati"].insert_one({
-        "titolo":    form.get("titolo"),
-        "contenuto": form.get("contenuto"),
-        "priority":  form.get("priority"),
-        "author":    user["username"],
-        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "titolo":      form.get("titolo"),
+        "contenuto":   form.get("contenuto"),
+        "priority":    form.get("priority"),
+        "destinatari": form.get("destinatari"),
+        "author":      user["username"],
+        "timestamp":   datetime.now().strftime("%d/%m/%Y %H:%M"),
     })
     return {"status": "ok", "message": "Comunicato pubblicato."}
 
@@ -261,7 +307,7 @@ async def add_comunicato(request: Request, user: dict = Depends(require_permissi
 @router.get("/pec", response_class=HTMLResponse)
 async def pec(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     pec_list = await db["pec"].find().sort("timestamp", -1).to_list(50)
-    dipendenti = await db["dipendenti"].find().to_list(100)
+    dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
     return templates.TemplateResponse("pec.html", {
         "request": request, "user": user,
         "pec_list": pec_list, "dipendenti": dipendenti,
@@ -275,6 +321,7 @@ async def send_pec(request: Request, user: dict = Depends(get_current_user), db=
         "destinatario": form.get("destinatario"),
         "oggetto":      form.get("oggetto"),
         "corpo":        form.get("corpo"),
+        "priorita":     form.get("priorita", "normale"),
         "mittente":     user["username"],
         "stato":        "inviata",
         "timestamp":    datetime.now().strftime("%d/%m/%Y %H:%M"),
@@ -296,17 +343,17 @@ async def storico(request: Request, user: dict = Depends(get_current_user), db=D
 @router.get("/statistiche", response_class=HTMLResponse)
 async def statistiche(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     stats = {
-        "dipendenti_totali":  await db["dipendenti"].count_documents({}),
-        "dirigenza":          await db["dipendenti"].count_documents({"categoria": "dirigenza"}),
-        "reparto":            await db["dipendenti"].count_documents({"categoria": "reparto"}),
-        "tirocinio":          await db["dipendenti"].count_documents({"categoria": "tirocinio"}),
-        "pazienti_totali":    await db["pazienti"].count_documents({}),
-        "pazienti_ricoverati":await db["pazienti"].count_documents({"status": "ricoverato"}),
-        "pazienti_dimessi":   await db["pazienti"].count_documents({"status": "dimesso"}),
-        "richiami_attivi":    await db["richiami"].count_documents({"status": "attivo"}),
-        "richiami_chiusi":    await db["richiami"].count_documents({"status": "chiuso"}),
-        "segnalazioni_aperte":await db["segnalazioni"].count_documents({"status": "aperta"}),
-        "documenti_totali":   await db["documenti"].count_documents({}),
+        "dipendenti_totali":   await db["dipendenti"].count_documents({"approvato": True}),
+        "dirigenza":           await db["dipendenti"].count_documents({"categoria": "dirigenza", "approvato": True}),
+        "reparto":             await db["dipendenti"].count_documents({"categoria": "reparto", "approvato": True}),
+        "tirocinio":           await db["dipendenti"].count_documents({"categoria": "tirocinio", "approvato": True}),
+        "pazienti_totali":     await db["pazienti"].count_documents({}),
+        "pazienti_ricoverati": await db["pazienti"].count_documents({"status": "ricoverato"}),
+        "pazienti_dimessi":    await db["pazienti"].count_documents({"status": "dimesso"}),
+        "richiami_attivi":     await db["richiami"].count_documents({"status": "attivo"}),
+        "richiami_chiusi":     await db["richiami"].count_documents({"status": "chiuso"}),
+        "segnalazioni_aperte": await db["segnalazioni"].count_documents({"status": "aperta"}),
+        "documenti_totali":    await db["documenti"].count_documents({}),
     }
     return templates.TemplateResponse("statistiche.html", {
         "request": request, "user": user,
@@ -317,12 +364,36 @@ async def statistiche(request: Request, user: dict = Depends(get_current_user), 
 # ── GESTIONE UTENTI ───────────────────────────────────────────────────────────
 @router.get("/utenti", response_class=HTMLResponse)
 async def utenti(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
-    lista = await db["dipendenti"].find().to_list(100)
+    approvati = await db["dipendenti"].find({"approvato": True}).to_list(100)
+    in_attesa = await db["dipendenti"].find({"approvato": False}).to_list(100)
     return templates.TemplateResponse("utenti.html", {
         "request": request, "user": user,
-        "dipendenti": lista, "active_section": "utenti",
+        "dipendenti": approvati,
+        "in_attesa": in_attesa,
+        "active_section": "utenti",
         "tutti_ruoli": TUTTI_RUOLI,
     })
+
+@router.post("/utenti/approva")
+async def approva_utente(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["dipendenti"].update_one(
+        {"_id": ObjectId(form.get("dipendente_id"))},
+        {"$set": {
+            "approvato": True,
+            "approvato_da": user["username"],
+            "approvato_il": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        }}
+    )
+    return {"status": "ok", "message": "Utente approvato."}
+
+@router.post("/utenti/rifiuta")
+async def rifiuta_utente(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["dipendenti"].delete_one({"_id": ObjectId(form.get("dipendente_id"))})
+    return {"status": "ok", "message": "Utente rifiutato e rimosso."}
 
 @router.post("/utenti/aggiorna-ruolo")
 async def aggiorna_ruolo(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
@@ -349,28 +420,16 @@ async def elimina_dipendente(request: Request, user: dict = Depends(require_perm
     return {"status": "ok", "message": "Dipendente rimosso."}
 
 
-@router.post("/segnalazioni/aggiorna")
-async def aggiorna_segnalazione(request: Request, user: dict = Depends(require_permission(50)), db=Depends(get_db)):
+@router.post("/utenti/aggiorna-dettagli")
+async def aggiorna_dettagli(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
     from bson import ObjectId
     form = await request.form()
-    await db["segnalazioni"].update_one(
-        {"_id": ObjectId(form.get("segnalazione_id"))},
-        {"$set": {"status": form.get("status")}}
+    await db["dipendenti"].update_one(
+        {"_id": ObjectId(form.get("dipendente_id"))},
+        {"$set": {
+            "nome":    form.get("nome"),
+            "cognome": form.get("cognome"),
+            "badge":   form.get("badge"),
+        }}
     )
-    return {"status": "ok", "message": "Segnalazione aggiornata."}
-
-
-@router.post("/richiami/elimina")
-async def elimina_richiamo(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
-    from bson import ObjectId
-    form = await request.form()
-    await db["richiami"].delete_one({"_id": ObjectId(form.get("richiamo_id"))})
-    return {"status": "ok", "message": "Richiamo eliminato."}
-
-
-@router.post("/richiami/elimina")
-async def elimina_richiamo(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
-    from bson import ObjectId
-    form = await request.form()
-    await db["richiami"].delete_one({"_id": ObjectId(form.get("richiamo_id"))})
-    return {"status": "ok", "message": "Richiamo eliminato."}
+    return {"status": "ok", "message": "Dettagli aggiornati."}

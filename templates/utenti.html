@@ -4,9 +4,47 @@
 {% block breadcrumb %}Home / Gestione / Utenti{% endblock %}
 
 {% block content %}
+
+<!-- In attesa di approvazione -->
+{% if in_attesa and in_attesa|length > 0 %}
+<div class="card" style="border-color:var(--warning);">
+  <div class="card-title" style="color:var(--warning);">⏳ In Attesa di Approvazione — {{ in_attesa|length }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Utente Discord</th>
+        <th>Ruolo Rilevato</th>
+        <th>Registrato il</th>
+        <th>Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in in_attesa %}
+      <tr>
+        <td>
+          <strong style="color:var(--text-primary)">{{ d.nome }}</strong>
+          <div style="font-size:11px;color:var(--text-muted);">ID: {{ d.discord_id }}</div>
+        </td>
+        <td><span class="pill pill-yellow">{{ d.ruolo }}</span></td>
+        <td style="font-size:11px;color:var(--text-muted);">{{ d.timestamp }}</td>
+        <td>
+          <div style="display:flex;gap:8px;">
+            <button onclick="approva('{{ d._id }}','{{ d.nome }}')" class="btn btn-success btn-sm">✅ Approva</button>
+            <button onclick="rifiuta('{{ d._id }}','{{ d.nome }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">❌ Rifiuta</button>
+            <button onclick="apriDettagli('{{ d._id }}','{{ d.ruolo }}')" class="btn btn-ghost btn-sm">✏️ Dettagli</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Dipendenti approvati -->
 <div class="card">
-  <div class="card-title">👤 Tutti i Dipendenti</div>
-  <div style="margin-bottom:20px;">
+  <div class="card-title">👤 Dipendenti Approvati</div>
+  <div style="margin-bottom:16px;">
     <input id="search" class="form-input" placeholder="🔍 Cerca per nome, ruolo, badge..."
       oninput="cerca()" style="max-width:400px;">
   </div>
@@ -62,8 +100,8 @@
         <td style="font-family:monospace;font-size:11px;color:var(--text-muted);">{{ d.discord_id }}</td>
         <td>
           <div style="display:flex;gap:6px;">
-            <button onclick="apriRuolo('{{ d._id }}','{{ d.ruolo }}')" class="btn btn-ghost btn-sm">🏷️ Ruolo</button>
-            <button onclick="apriStato('{{ d._id }}','{{ d.stato }}')" class="btn btn-ghost btn-sm">⚙️ Stato</button>
+            <button onclick="apriRuolo('{{ d._id }}','{{ d.ruolo }}')" class="btn btn-ghost btn-sm">🏷️</button>
+            <button onclick="apriStato('{{ d._id }}','{{ d.stato }}')" class="btn btn-ghost btn-sm">⚙️</button>
             <button onclick="elimina('{{ d._id }}','{{ d.nome }} {{ d.cognome }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
           </div>
         </td>
@@ -73,9 +111,57 @@
   </table>
   {% else %}
   <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
-    Nessun dipendente registrato.
+    Nessun dipendente approvato.
   </p>
   {% endif %}
+</div>
+
+<!-- Modale Dettagli (per completare profilo prima di approvare) -->
+<div id="modaleDettagli" class="modale-overlay">
+  <div class="modale" style="width:500px;">
+    <div class="modale-title">✏️ Completa Profilo Prima di Approvare</div>
+    <input type="hidden" id="dettagli-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input id="dettagli-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="dettagli-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Badge</label>
+        <input id="dettagli-badge" class="form-input" placeholder="es. SC-0042">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ruolo</label>
+        <select id="dettagli-ruolo" class="form-select">
+          <optgroup label="💼 Dirigenza">
+            <option value="Direttore">Direttore</option>
+            <option value="Responsabile Assunzione e Formazione">Responsabile Assunzione e Formazione</option>
+            <option value="Responsabile Farmacia">Responsabile Farmacia</option>
+            <option value="Responsabile Amministrazione e Sanità">Responsabile Amministrazione e Sanità</option>
+          </optgroup>
+          <optgroup label="💉 Reparto">
+            <option value="Primario">Primario</option>
+            <option value="Vice Primario">Vice Primario</option>
+            <option value="Specialista">Specialista</option>
+            <option value="Medico in Formazione Specialistica">Medico in Formazione Specialistica</option>
+          </optgroup>
+          <optgroup label="🩺 Tirocinio">
+            <option value="Medico di Base">Medico di Base</option>
+            <option value="Medico Assistente">Medico Assistente (Infermiere)</option>
+            <option value="Medico Tirocinante">Medico Tirocinante</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="modale-footer">
+      <button onclick="salvaEApprova()" class="btn btn-success">✅ Salva e Approva</button>
+      <button onclick="chiudi('modaleDettagli')" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modale Ruolo -->
@@ -141,6 +227,11 @@ function cerca() {
     r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 }
+function apriDettagli(id, ruolo) {
+  document.getElementById('dettagli-id').value = id;
+  document.getElementById('dettagli-ruolo').value = ruolo;
+  document.getElementById('modaleDettagli').classList.add('aperto');
+}
 function apriRuolo(id, ruolo) {
   document.getElementById('ruolo-id').value = id;
   document.getElementById('ruolo-val').value = ruolo;
@@ -152,6 +243,44 @@ function apriStato(id, stato) {
   document.getElementById('modaleStato').classList.add('aperto');
 }
 function chiudi(id) { document.getElementById(id).classList.remove('aperto'); }
+
+async function approva(id, nome) {
+  if (!confirm(`Confermi approvazione di ${nome}?`)) return;
+  const fd = new FormData();
+  fd.append('dipendente_id', id);
+  const r = await fetch('/dashboard/utenti/approva', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+async function rifiuta(id, nome) {
+  if (!confirm(`Confermi rifiuto e rimozione di ${nome}?`)) return;
+  const fd = new FormData();
+  fd.append('dipendente_id', id);
+  const r = await fetch('/dashboard/utenti/rifiuta', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
+async function salvaEApprova() {
+  const id = document.getElementById('dettagli-id').value;
+  // Prima aggiorna i dettagli
+  const fd1 = new FormData();
+  fd1.append('dipendente_id', id);
+  fd1.append('ruolo', document.getElementById('dettagli-ruolo').value);
+  await fetch('/dashboard/utenti/aggiorna-ruolo', {method:'POST', body:fd1});
+  // Poi aggiorna nome/cognome/badge
+  const fd2 = new FormData();
+  fd2.append('dipendente_id', id);
+  fd2.append('nome', document.getElementById('dettagli-nome').value);
+  fd2.append('cognome', document.getElementById('dettagli-cognome').value);
+  fd2.append('badge', document.getElementById('dettagli-badge').value);
+  await fetch('/dashboard/utenti/aggiorna-dettagli', {method:'POST', body:fd2});
+  // Poi approva
+  const fd3 = new FormData();
+  fd3.append('dipendente_id', id);
+  const r = await fetch('/dashboard/utenti/approva', {method:'POST', body:fd3});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+}
 async function salvaRuolo() {
   const fd = new FormData();
   fd.append('dipendente_id', document.getElementById('ruolo-id').value);

@@ -7,7 +7,7 @@ DISCORD_CLIENT_ID     = os.getenv("DISCORD_CLIENT_ID", "")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
 DISCORD_BOT_TOKEN     = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_GUILD_ID      = int(os.getenv("DISCORD_GUILD_ID", "0"))
-DISCORD_REDIRECT_URI  = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:8000/auth/callback")
+DISCORD_REDIRECT_URI  = os.getenv("DISCORD_REDIRECT_URI", "https://gestionaleosc.onrender.com/callback")
 
 DISCORD_API_BASE = "https://discord.com/api/v10"
 
