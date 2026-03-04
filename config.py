@@ -21,6 +21,7 @@ APP_PORT   = int(os.getenv("APP_PORT", "8000"))
 OSPEDALE_NOME = "Ospedale San Camillo"
 
 ROLE_PERMISSIONS: dict[str, int] = {
+    os.getenv("ROLE_STAFF",           ""): 100,
     os.getenv("ROLE_DIRETTORE",       ""): 100,
     os.getenv("ROLE_RESP_ASSUNZIONE", ""):  50,
     os.getenv("ROLE_RESP_FARMACIA",   ""):  50,
@@ -36,6 +37,7 @@ ROLE_PERMISSIONS: dict[str, int] = {
 ROLE_PERMISSIONS = {k: v for k, v in ROLE_PERMISSIONS.items() if k}
 
 RUOLI_DIRIGENZA = [
+    "Staff di OblivionMC",
     "Direttore",
     "Responsabile Assunzione e Formazione",
     "Responsabile Farmacia",
