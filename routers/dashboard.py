@@ -433,3 +433,43 @@ async def aggiorna_dettagli(request: Request, user: dict = Depends(require_permi
         }}
     )
     return {"status": "ok", "message": "Dettagli aggiornati."}
+
+
+@router.post("/pec/elimina")
+async def elimina_pec(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["pec"].delete_one({"_id": ObjectId(form.get("pec_id"))})
+    return {"status": "ok", "message": "PEC eliminata."}
+
+
+@router.post("/documenti/elimina")
+async def elimina_documento(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["documenti"].delete_one({"_id": ObjectId(form.get("documento_id"))})
+    return {"status": "ok", "message": "Documento eliminato."}
+
+
+@router.post("/segnalazioni/elimina")
+async def elimina_segnalazione(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["segnalazioni"].delete_one({"_id": ObjectId(form.get("segnalazione_id"))})
+    return {"status": "ok", "message": "Segnalazione eliminata."}
+
+
+@router.post("/comunicati/elimina")
+async def elimina_comunicato(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["comunicati"].delete_one({"_id": ObjectId(form.get("comunicato_id"))})
+    return {"status": "ok", "message": "Comunicato eliminato."}
+
+
+@router.post("/pazienti/elimina")
+async def elimina_paziente(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["pazienti"].delete_one({"_id": ObjectId(form.get("paziente_id"))})
+    return {"status": "ok", "message": "Paziente eliminato."}
