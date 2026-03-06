@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands, application_checks
 from config import DISCORD_GUILD_ID, ROLE_PERMISSIONS, RUOLI_DIRIGENZA, RUOLI_REPARTO
 from datetime import datetime
 
@@ -23,23 +23,11 @@ def calcola_categoria(ruolo: str) -> str:
 
 
 async def setup_bot(bot, db):
-    """Chiamato da main.py al lifespan startup."""
     global _bot_instance
     _bot_instance = bot
 
     @bot.event
-    async def on_ready():
-        global _bot_instance
-        _bot_instance = bot
-        print(f"[Bot] Connesso come {bot.user} (ID: {bot.user.id})")
-        try:
-            synced = await bot.tree.sync()
-            print(f"[Bot] {len(synced)} slash commands sincronizzati.")
-        except Exception as e:
-            print(f"[Bot] Errore sync: {e}")
-
-    @bot.event
-    async def on_member_update(before: discord.Member, after: discord.Member):
+    async def on_member_update(before: nextcord.Member, after: nextcord.Member):
         if before.roles == after.roles:
             return
         discord_id = str(after.id)
@@ -65,7 +53,7 @@ async def setup_bot(bot, db):
             )
             print(f"[Bot] Aggiornato {after.name}: ruolo={ruolo_nome}, permesso={nuovo_permesso}")
             try:
-                embed = discord.Embed(
+                embed = nextcord.Embed(
                     title="🏥 Ospedale San Camillo — Ruolo Aggiornato",
                     color=0xdc2626,
                     timestamp=datetime.utcnow(),
@@ -78,11 +66,12 @@ async def setup_bot(bot, db):
             except Exception:
                 pass
 
-    @bot.tree.command(name="info", description="Mostra info sul tuo accesso al gestionale")
-    async def info(interaction: discord.Interaction):
+    # Slash command con nextcord (senza tree)
+    @bot.slash_command(name="info", description="Mostra info sul tuo accesso al gestionale", guild_ids=[int(DISCORD_GUILD_ID)])
+    async def info(interaction: nextcord.Interaction):
         discord_id = str(interaction.user.id)
         dip = await db["dipendenti"].find_one({"discord_id": discord_id})
-        embed = discord.Embed(title="🏥 Ospedale San Camillo", color=0xdc2626)
+        embed = nextcord.Embed(title="🏥 Ospedale San Camillo", color=0xdc2626)
         if dip:
             embed.add_field(name="👤 Nome", value=f"{dip.get('nome','')} {dip.get('cognome','')}", inline=True)
             embed.add_field(name="🏷️ Ruolo", value=dip.get("ruolo","—"), inline=True)
@@ -93,7 +82,7 @@ async def setup_bot(bot, db):
 
     @bot.command(name="stato")
     async def stato(ctx):
-        embed = discord.Embed(title="🏥 Stato Gestionale", color=0xdc2626)
+        embed = nextcord.Embed(title="🏥 Stato Gestionale", color=0xdc2626)
         embed.add_field(name="✅ Web", value="Online", inline=True)
         embed.add_field(name="✅ Bot", value="Online", inline=True)
         await ctx.send(embed=embed)

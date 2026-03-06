@@ -75,3 +75,7 @@ PEC_DESTINATARI = [
     "Reparto Medici",
     "Tirocinio",
 ]
+
+API_KEY = os.getenv('API_KEY', '')
+POLIZIA_URL = os.getenv('POLIZIA_URL', '')
+POLIZIA_API_KEY = os.getenv('POLIZIA_API_KEY', '')
