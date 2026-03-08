@@ -613,3 +613,75 @@ async def candidatura_rifiuta(request: Request, user: dict = Depends(require_per
         print(f"[CANDIDATURA] Errore: {e}")
 
     return JSONResponse({"status": "ok", "message": "Candidatura rifiutata."})
+
+
+@router.get("/corsi", response_class=HTMLResponse)
+async def corsi_page(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    corsi = await db["corsi"].find().sort("timestamp", -1).to_list(100)
+    for corso in corsi:
+        corso_id = str(corso["_id"])
+        partecipanti = await db["prenotazioni_corsi"].find({"corso_id": corso_id}).to_list(100)
+        corso["partecipanti"] = partecipanti
+        corso["iscritti"] = len([p for p in partecipanti if p.get("stato") != "annullata"])
+    return templates.TemplateResponse("corsi.html", {
+        "request": request,
+        "user": user,
+        "corsi": corsi,
+    })
+
+
+@router.post("/corsi/crea")
+async def corso_crea(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from datetime import datetime
+    form = await request.form()
+    tipo = form.get("tipo")
+    nomi = {"massaggio_cardiaco": "Massaggio Cardiaco (BLS-D)", "heimlich": "Manovra di Heimlich"}
+    await db["corsi"].insert_one({
+        "tipo": tipo,
+        "nome": nomi.get(tipo, tipo),
+        "data": form.get("data"),
+        "ora": form.get("ora"),
+        "luogo": form.get("luogo"),
+        "max_partecipanti": int(form.get("max_partecipanti", 20)),
+        "note": form.get("note", ""),
+        "attivo": False,
+        "creato_da": user["username"],
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+    })
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/corsi/toggle")
+async def corso_toggle(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    attivo = form.get("attivo") == "true"
+    await db["corsi"].update_one(
+        {"_id": ObjectId(form.get("corso_id"))},
+        {"$set": {"attivo": attivo}}
+    )
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/corsi/elimina")
+async def corso_elimina(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["corsi"].delete_one({"_id": ObjectId(form.get("corso_id"))})
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/corsi/valuta")
+async def corso_valuta(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from bson import ObjectId
+    from datetime import datetime
+    form = await request.form()
+    await db["prenotazioni_corsi"].update_one(
+        {"_id": ObjectId(form.get("iscrizione_id"))},
+        {"$set": {
+            "esito": form.get("esito"),
+            "valutato_da": user["username"],
+            "valutato_il": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        }}
+    )
+    return JSONResponse({"status": "ok"})
