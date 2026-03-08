@@ -597,53 +597,49 @@ async def corso_prenota(request: Request):
 # ─── MESSAGGI ────────────────────────────────────────────────────────────────
 
 @router.get("/messaggi", response_class=HTMLResponse)
-async def messaggi_page(request: Request):
-    from database import get_db as _get_db
+async def messaggi_page(request: Request, db=Depends(get_db)):
     cittadino = await require_cittadino(request)
     if isinstance(cittadino, RedirectResponse): return cittadino
-    async for db in _get_db():
-        messaggi_ricevuti = await db["pec"].find({
-            "destinatario": f"cittadino:{cittadino['discord_id']}"
-        }).sort("timestamp", -1).to_list(50)
-        messaggi_inviati = await db["pec"].find({
-            "mittente_id": cittadino["discord_id"],
-            "mittente_tipo": "cittadino"
-        }).sort("timestamp", -1).to_list(50)
-        dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
-        return templates.TemplateResponse("cittadini/messaggi.html", {
-            "request": request,
-            "cittadino": cittadino,
-            "ricevuti": messaggi_ricevuti,
-            "inviati": messaggi_inviati,
-            "dipendenti": dipendenti,
-            "reparti": [
-                {"id": "reparto:pronto_soccorso", "nome": "🚨 Pronto Soccorso"},
-                {"id": "reparto:degenze", "nome": "🛏️ Reparto Degenze"},
-                {"id": "reparto:chirurgia", "nome": "✂️ Chirurgia"},
-                {"id": "reparto:laboratorio", "nome": "🔬 Laboratorio Analisi"},
-                {"id": "reparto:farmacia", "nome": "💊 Farmacia"},
-                {"id": "reparto:amministrazione", "nome": "📁 Amministrazione"},
-            ],
-        })
+    messaggi_ricevuti = await db["pec"].find({
+        "destinatario": f"cittadino:{cittadino['discord_id']}"
+    }).sort("timestamp", -1).to_list(50)
+    messaggi_inviati = await db["pec"].find({
+        "mittente_id": cittadino["discord_id"],
+        "mittente_tipo": "cittadino"
+    }).sort("timestamp", -1).to_list(50)
+    dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
+    return templates.TemplateResponse("cittadini/messaggi.html", {
+        "request": request,
+        "cittadino": cittadino,
+        "ricevuti": messaggi_ricevuti,
+        "inviati": messaggi_inviati,
+        "dipendenti": dipendenti,
+        "reparti": [
+            {"id": "reparto:pronto_soccorso", "nome": "🚨 Pronto Soccorso"},
+            {"id": "reparto:degenze", "nome": "🛏️ Reparto Degenze"},
+            {"id": "reparto:chirurgia", "nome": "✂️ Chirurgia"},
+            {"id": "reparto:laboratorio", "nome": "🔬 Laboratorio Analisi"},
+            {"id": "reparto:farmacia", "nome": "💊 Farmacia"},
+            {"id": "reparto:amministrazione", "nome": "📁 Amministrazione"},
+        ],
+    })
 
 
 @router.post("/messaggi/invia")
-async def messaggi_invia(request: Request):
-    from database import get_db as _get_db
+async def messaggi_invia(request: Request, db=Depends(get_db)):
     from datetime import datetime
     cittadino = await require_cittadino(request)
     if isinstance(cittadino, RedirectResponse): return cittadino
-    async for db in _get_db():
-        form = await request.form()
-        await db["pec"].insert_one({
-            "destinatario": form.get("destinatario"),
-            "oggetto": form.get("oggetto"),
-            "corpo": form.get("corpo"),
-            "priorita": "normale",
-            "mittente": cittadino["username"],
-            "mittente_id": cittadino["discord_id"],
-            "mittente_tipo": "cittadino",
-            "stato": "inviata",
-            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
-        })
-        return JSONResponse({"status": "ok"})
+    form = await request.form()
+    await db["pec"].insert_one({
+        "destinatario": form.get("destinatario"),
+        "oggetto": form.get("oggetto"),
+        "corpo": form.get("corpo"),
+        "priorita": "normale",
+        "mittente": cittadino["username"],
+        "mittente_id": cittadino["discord_id"],
+        "mittente_tipo": "cittadino",
+        "stato": "inviata",
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+    })
+    return JSONResponse({"status": "ok"})
