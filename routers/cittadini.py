@@ -597,9 +597,12 @@ async def corso_prenota(request: Request):
 # ─── MESSAGGI ────────────────────────────────────────────────────────────────
 
 @router.get("/messaggi", response_class=HTMLResponse)
-async def messaggi_page(request: Request, db=Depends(get_db)):
+async def messaggi_page(request: Request):
+    from database import get_db as _get_db
+    from datetime import datetime
     cittadino = await require_cittadino(request)
     if isinstance(cittadino, RedirectResponse): return cittadino
+    db = await _get_db().__anext__()
     messaggi_ricevuti = await db["pec"].find({
         "destinatario": f"cittadino:{cittadino['discord_id']}"
     }).sort("timestamp", -1).to_list(50)
@@ -626,10 +629,12 @@ async def messaggi_page(request: Request, db=Depends(get_db)):
 
 
 @router.post("/messaggi/invia")
-async def messaggi_invia(request: Request, db=Depends(get_db)):
+async def messaggi_invia(request: Request):
+    from database import get_db as _get_db
     from datetime import datetime
     cittadino = await require_cittadino(request)
     if isinstance(cittadino, RedirectResponse): return cittadino
+    db = await _get_db().__anext__()
     form = await request.form()
     await db["pec"].insert_one({
         "destinatario": form.get("destinatario"),
