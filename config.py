@@ -79,3 +79,6 @@ PEC_DESTINATARI = [
 API_KEY = os.getenv('API_KEY', '')
 POLIZIA_URL = os.getenv('POLIZIA_URL', '')
 POLIZIA_API_KEY = os.getenv('POLIZIA_API_KEY', '')
+
+CANALE_ANNUNCI_ID = os.getenv("CANALE_ANNUNCI_ID", "")
+

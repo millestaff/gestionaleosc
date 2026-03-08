@@ -13,6 +13,7 @@ import database
 from auth import router as auth_router
 from bot.cogs import setup_bot
 from routers.dashboard import router as dashboard_router
+from routers.cittadini import router as cittadini_router
 from routers.api import router as api_router
 from datetime import datetime, timezone
 
@@ -71,6 +72,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app.include_router(auth_router)
 app.include_router(dashboard_router)
+app.include_router(cittadini_router)
 app.include_router(api_router)
 
 
