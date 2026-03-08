@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Tessera Sanitaria — Portale Cittadini{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h1>🪪 Tessera Sanitaria</h1>
+  <p>La tua identità digitale presso l'Ospedale San Camillo.</p>
+</div>
+
+{% if tessera %}
+<!-- TESSERA ESISTENTE -->
+<div class="card" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border:2px solid #dc2626;position:relative;overflow:hidden;max-width:700px;">
+  <div style="position:absolute;right:-10px;top:-10px;font-size:100px;opacity:.05;">🏥</div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:20px;">
+    <div>
+      <div style="font-size:10px;color:#dc2626;font-weight:700;letter-spacing:2px;margin-bottom:6px;">OSPEDALE SAN CAMILLO — TESSERA SANITARIA DIGITALE</div>
+      <div style="font-size:26px;font-weight:700;">{{ tessera.nome }} {{ tessera.cognome }}</div>
+      <div style="font-size:14px;color:var(--text-muted);margin-top:4px;">Codice Fiscale: <strong>{{ tessera.codice_fiscale }}</strong></div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">N° TESSERA</div>
+      <div style="font-size:18px;font-weight:700;font-family:monospace;color:#dc2626;background:rgba(220,38,38,.1);padding:6px 12px;border-radius:8px;border:1px solid rgba(220,38,38,.3);">{{ tessera.numero }}</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);">
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">DATA DI NASCITA</div>
+      <div style="font-weight:600;">{{ tessera.data_nascita or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">GRUPPO SANGUIGNO</div>
+      <div style="font-weight:700;color:#dc2626;font-size:16px;">{{ tessera.gruppo_sanguigno or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">INDIRIZZO</div>
+      <div style="font-weight:600;font-size:13px;">{{ tessera.indirizzo or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">ALLERGIE NOTE</div>
+      <div style="font-weight:600;color:{{ '#fbbf24' if tessera.allergie else 'var(--text-muted)' }};">{{ tessera.allergie or 'Nessuna' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">RILASCIATA IL</div>
+      <div style="font-weight:600;font-size:13px;">{{ tessera.creata_il }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-success" style="max-width:700px;">
+  ✅ La tua tessera è attiva. Presentala al personale ospedaliero durante le visite.
+</div>
+
+{% else %}
+<!-- CREA TESSERA -->
+<div class="alert alert-info">
+  ℹ️ Non hai ancora una tessera sanitaria. Compilare il modulo per crearla gratuitamente.
+</div>
+
+<div class="card" style="max-width:700px;">
+  <div class="card-title">📝 Crea la tua Tessera Sanitaria</div>
+
+  <div id="tesseraForm">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="nome" class="form-input" placeholder="Es. Mario">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome *</label>
+        <input id="cognome" class="form-input" placeholder="Es. Rossi">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data di Nascita *</label>
+        <input id="data_nascita" type="date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Codice Fiscale *</label>
+        <input id="codice_fiscale" class="form-input" placeholder="RSSMRA80A01H501U" maxlength="16" style="text-transform:uppercase;">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Indirizzo di Residenza</label>
+        <input id="indirizzo" class="form-input" placeholder="Via, numero civico, città">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gruppo Sanguigno</label>
+        <select id="gruppo_sanguigno" class="form-select">
+          <option value="">Non so / Non specificato</option>
+          <option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option>
+          <option>0+</option><option>0-</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allergie Note</label>
+        <input id="allergie" class="form-input" placeholder="Es. Penicillina, lattice... (lascia vuoto se nessuna)">
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;align-items:center;">
+      <button onclick="creaTessera()" class="btn btn-primary">🪪 Crea Tessera Sanitaria</button>
+      <span id="tesseraMsg" style="font-size:13px;color:var(--text-muted);"></span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+async function creaTessera() {
+  const msg = document.getElementById('tesseraMsg');
+  const nome = document.getElementById('nome').value.trim();
+  const cognome = document.getElementById('cognome').value.trim();
+  const cf = document.getElementById('codice_fiscale').value.trim();
+  const data_nascita = document.getElementById('data_nascita').value;
+  if (!nome || !cognome || !cf || !data_nascita) {
+    msg.textContent = '⚠️ Compila tutti i campi obbligatori.';
+    msg.style.color = '#f87171';
+    return;
+  }
+  msg.textContent = 'Creazione in corso...';
+  msg.style.color = '#94a3b8';
+  const fd = new FormData();
+  fd.append('nome', nome);
+  fd.append('cognome', cognome);
+  fd.append('data_nascita', data_nascita);
+  fd.append('codice_fiscale', cf.toUpperCase());
+  fd.append('indirizzo', document.getElementById('indirizzo').value.trim());
+  fd.append('gruppo_sanguigno', document.getElementById('gruppo_sanguigno').value);
+  fd.append('allergie', document.getElementById('allergie').value.trim());
+  const r = await fetch('/cittadini/tessera/crea', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') {
+    msg.textContent = `✅ Tessera creata! Numero: ${j.numero}`;
+    msg.style.color = '#4ade80';
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    msg.textContent = '❌ ' + j.detail;
+    msg.style.color = '#f87171';
+  }
+}
+</script>
+{% endblock %}

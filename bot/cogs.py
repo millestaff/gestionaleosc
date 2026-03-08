@@ -52,19 +52,7 @@ async def setup_bot(bot, db):
                 }}
             )
             print(f"[Bot] Aggiornato {after.name}: ruolo={ruolo_nome}, permesso={nuovo_permesso}")
-            try:
-                embed = nextcord.Embed(
-                    title="🏥 Ospedale San Camillo — Ruolo Aggiornato",
-                    color=0xdc2626,
-                    timestamp=datetime.utcnow(),
-                )
-                embed.add_field(name="👤 Account", value=after.mention, inline=False)
-                embed.add_field(name="🏷️ Nuovo Ruolo", value=ruolo_nome, inline=True)
-                embed.add_field(name="🔑 Livello Accesso", value=str(nuovo_permesso), inline=True)
-                embed.set_footer(text="Il tuo accesso al gestionale è stato aggiornato automaticamente.")
-                await after.send(embed=embed)
-            except Exception:
-                pass
+
 
     # Slash command con nextcord (senza tree)
     @bot.slash_command(name="info", description="Mostra info sul tuo accesso al gestionale", guild_ids=[int(DISCORD_GUILD_ID)])

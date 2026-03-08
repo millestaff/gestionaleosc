@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Prenotazioni Visite — Portale Cittadini{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h1>📅 Prenota una Visita</h1>
+  <p>Richiedi una visita medica. I dottori la prenderanno in carico.</p>
+</div>
+
+<!-- FORM NUOVA PRENOTAZIONE -->
+<div class="card">
+  <div class="card-title">➕ Nuova Prenotazione</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">Tipo di Visita *</label>
+      <select id="tipo_visita" class="form-select" onchange="aggiornaNota()">
+        {% for tipo in tipi_visita %}
+        <option value="{{ tipo }}">{{ tipo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data Preferita *</label>
+      <input id="data_richiesta" type="date" class="form-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ora Preferita</label>
+      <input id="ora_preferita" type="time" class="form-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note Aggiuntive</label>
+      <input id="note" class="form-input" placeholder="Sintomi, motivo della visita...">
+    </div>
+  </div>
+  <div id="notaReparto" style="display:none;" class="alert alert-info" style="margin-top:12px;"></div>
+  <div style="margin-top:16px;display:flex;align-items:center;gap:12px;">
+    <button onclick="nuovaPrenotazione()" class="btn btn-primary">📅 Invia Prenotazione</button>
+    <span id="prenMsg" style="font-size:13px;"></span>
+  </div>
+</div>
+
+<!-- LISTA PRENOTAZIONI -->
+<div class="card">
+  <div class="card-title">📋 Le Mie Prenotazioni</div>
+  {% if prenotazioni %}
+  <table>
+    <thead>
+      <tr>
+        <th>Data Richiesta</th>
+        <th>Tipo Visita</th>
+        <th>Ora Preferita</th>
+        <th>Stato</th>
+        <th>Medico</th>
+        <th>Azioni</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in prenotazioni %}
+      <tr>
+        <td style="font-size:12px;color:var(--text-muted);">{{ p.data_richiesta }}<br>{{ p.timestamp }}</td>
+        <td><strong>{{ p.tipo_visita }}</strong></td>
+        <td>{{ p.ora_preferita or '—' }}</td>
+        <td>
+          {% if p.stato == 'in_attesa' %}
+            <span class="pill pill-yellow">⏳ In Attesa</span>
+          {% elif p.stato == 'in_carico' %}
+            <span class="pill pill-blue">👨‍⚕️ In Carico</span>
+          {% elif p.stato == 'completata' %}
+            <span class="pill pill-green">✅ Completata</span>
+          {% elif p.stato == 'annullata' %}
+            <span class="pill pill-gray">❌ Annullata</span>
+          {% else %}
+            <span class="pill pill-gray">{{ p.stato }}</span>
+          {% endif %}
+        </td>
+        <td style="font-size:13px;">{{ p.medico_assegnato or '—' }}</td>
+        <td>
+          {% if p.stato == 'in_attesa' %}
+          <button onclick="annullaPrenotazione('{{ p._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">Annulla</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
+    Nessuna prenotazione ancora. Usa il modulo sopra per richiedere una visita.
+  </p>
+  {% endif %}
+</div>
+
+<script>
+const NOTE_REPARTO = {
+  'Pronto Soccorso': 'Questa visita sarà visibile solo ai Primari del reparto.',
+  'Cardiologia': 'Questa visita sarà assegnata a Medici Specialisti.',
+  'Chirurgia': 'Questa visita sarà assegnata a Medici Specialisti.',
+  'Laboratorio Analisi': 'Questa richiesta sarà gestita dal personale di laboratorio.',
+  'Farmacia': 'Questa richiesta sarà gestita dal Responsabile Farmacia.',
+  'Pediatria': 'Questa visita sarà assegnata a Medici Specialisti.',
+  'Neurologia': 'Questa visita sarà assegnata a Medici Specialisti.',
+  'Ortopedia': 'Questa visita sarà assegnata a Medici Specialisti.',
+  'Psicologia': 'Questa visita sarà gestita da personale specializzato.',
+};
+
+function aggiornaNota() {
+  const tipo = document.getElementById('tipo_visita').value;
+  const div = document.getElementById('notaReparto');
+  if (NOTE_REPARTO[tipo]) {
+    div.textContent = 'ℹ️ ' + NOTE_REPARTO[tipo];
+    div.style.display = 'flex';
+  } else {
+    div.style.display = 'none';
+  }
+}
+aggiornaNota();
+
+async function nuovaPrenotazione() {
+  const msg = document.getElementById('prenMsg');
+  const data = document.getElementById('data_richiesta').value;
+  if (!data) {
+    msg.textContent = '⚠️ Seleziona una data.';
+    msg.style.color = '#f87171';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('tipo_visita', document.getElementById('tipo_visita').value);
+  fd.append('data_richiesta', data);
+  fd.append('ora_preferita', document.getElementById('ora_preferita').value);
+  fd.append('note', document.getElementById('note').value);
+  const r = await fetch('/cittadini/prenotazioni/nuova', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') {
+    msg.textContent = '✅ ' + j.message;
+    msg.style.color = '#4ade80';
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    msg.textContent = '❌ ' + j.detail;
+    msg.style.color = '#f87171';
+  }
+}
+
+async function annullaPrenotazione(id) {
+  if (!confirm('Annullare questa prenotazione?')) return;
+  const fd = new FormData();
+  fd.append('prenotazione_id', id);
+  const r = await fetch('/cittadini/prenotazioni/annulla', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+</script>
+{% endblock %}

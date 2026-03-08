@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Portale Cittadini{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h1>👋 Benvenuto, {{ user.username }}</h1>
+  <p>Gestisci la tua salute dal portale cittadini dell'Ospedale San Camillo.</p>
+</div>
+
+{% if not tessera %}
+<div class="alert alert-warning">
+  ⚠️ Non hai ancora una tessera sanitaria. <a href="/cittadini/tessera" style="color:#fcd34d;font-weight:600;">Creala subito →</a>
+</div>
+{% endif %}
+
+<!-- STATS -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+  <div class="card" style="margin-bottom:0;text-align:center;padding:20px;">
+    <div style="font-size:32px;margin-bottom:8px;">🪪</div>
+    <div style="font-size:22px;font-weight:700;color:{% if tessera %}#22c55e{% else %}#ef4444{% endif %};">
+      {% if tessera %}✓{% else %}✗{% endif %}
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Tessera Sanitaria</div>
+  </div>
+  <div class="card" style="margin-bottom:0;text-align:center;padding:20px;">
+    <div style="font-size:32px;margin-bottom:8px;">📅</div>
+    <div style="font-size:22px;font-weight:700;color:var(--info);">{{ n_visite }}</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Visite Attive</div>
+  </div>
+  <div class="card" style="margin-bottom:0;text-align:center;padding:20px;">
+    <div style="font-size:32px;margin-bottom:8px;">📋</div>
+    <div style="font-size:22px;font-weight:700;color:var(--success);">{{ n_referti }}</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Referti Disponibili</div>
+  </div>
+  <div class="card" style="margin-bottom:0;text-align:center;padding:20px;">
+    <div style="font-size:32px;margin-bottom:8px;">🩺</div>
+    <div style="font-size:22px;font-weight:700;color:var(--warning);">{{ n_corsi }}</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Corsi Iscritti</div>
+  </div>
+</div>
+
+{% if tessera %}
+<!-- TESSERA PREVIEW -->
+<div class="card" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-color:#dc2626;position:relative;overflow:hidden;">
+  <div style="position:absolute;right:-20px;top:-20px;font-size:120px;opacity:.05;">🏥</div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div style="font-size:11px;color:#dc2626;font-weight:600;letter-spacing:2px;margin-bottom:4px;">TESSERA SANITARIA DIGITALE</div>
+      <div style="font-size:22px;font-weight:700;">{{ tessera.nome }} {{ tessera.cognome }}</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">C.F.: {{ tessera.codice_fiscale }}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">NUMERO TESSERA</div>
+      <div style="font-size:16px;font-weight:700;font-family:monospace;color:#dc2626;">{{ tessera.numero }}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Rilasciata: {{ tessera.creata_il }}</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);">
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">GRUPPO SANGUIGNO</div>
+      <div style="font-weight:600;color:#dc2626;">{{ tessera.gruppo_sanguigno or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">DATA DI NASCITA</div>
+      <div style="font-weight:600;">{{ tessera.data_nascita or '—' }}</div>
+    </div>
+    {% if tessera.allergie %}
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">ALLERGIE</div>
+      <div style="font-weight:600;color:#fbbf24;">{{ tessera.allergie }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- AZIONI RAPIDE -->
+<div class="card">
+  <div class="card-title">⚡ Azioni Rapide</div>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;">
+    <a href="/cittadini/prenotazioni" class="btn btn-primary">📅 Prenota Visita</a>
+    <a href="/cittadini/referti" class="btn btn-info">📋 Vedi Referti</a>
+    <a href="/cittadini/corsi" class="btn btn-success">🩺 Iscriviti ai Corsi</a>
+    <a href="/cittadini/candidatura" class="btn btn-ghost">👨‍⚕️ Candidatura Medico</a>
+  </div>
+</div>
+
+{% endblock %}

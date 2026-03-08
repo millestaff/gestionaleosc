@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Candidature — Gestionale{% endblock %}
+{% block page_title %}Candidature Medico{% endblock %}
+{% block breadcrumb %}Home / Candidature{% endblock %}
+
+{% block content %}
+
+<!-- STATS -->
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--warning);">
+      {{ candidature|selectattr('stato','equalto','in_attesa')|list|length }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">In Attesa</div>
+  </div>
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--success);">
+      {{ candidature|selectattr('stato','equalto','approvata')|list|length }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">Approvate</div>
+  </div>
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--danger);">
+      {{ candidature|selectattr('stato','equalto','rifiutata')|list|length }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">Rifiutate</div>
+  </div>
+</div>
+
+<!-- LISTA CANDIDATURE -->
+<div class="card">
+  <div class="card-title">📋 Candidature Ricevute</div>
+
+  {% if candidature %}
+  <div style="display:grid;gap:16px;">
+    {% for c in candidature %}
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:700;font-size:16px;">{{ c.nome }} {{ c.cognome }} — <span style="color:var(--text-muted);font-weight:400;font-size:14px;">@{{ c.username }}</span></div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">
+            {{ c.titolo_studio }} {% if c.specializzazione %}• {{ c.specializzazione }}{% endif %} • {{ c.eta }} anni
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          {% if c.stato == 'in_attesa' %}
+            <span class="pill pill-yellow">⏳ In Attesa</span>
+          {% elif c.stato == 'approvata' %}
+            <span class="pill pill-green">✅ Approvata</span>
+          {% elif c.stato == 'rifiutata' %}
+            <span class="pill pill-red">❌ Rifiutata</span>
+          {% endif %}
+          <span style="font-size:12px;color:var(--text-muted);">{{ c.timestamp }}</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">RUOLO DESIDERATO</div>
+          <div style="font-size:13px;font-weight:600;">{{ c.ruolo_desiderato or '—' }}</div>
+        </div>
+        {% if c.esperienza %}
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">ESPERIENZA</div>
+          <div style="font-size:13px;">{{ c.esperienza[:100] }}{% if c.esperienza|length > 100 %}...{% endif %}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if c.motivazione %}
+      <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--text-muted);border-left:3px solid var(--primary);">
+        <strong style="color:var(--text);">Motivazione:</strong> {{ c.motivazione }}
+      </div>
+      {% endif %}
+
+      {% if c.stato == 'in_attesa' %}
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <!-- Selezione ruolo Discord per approvazione -->
+        <select id="ruolo_{{ c._id }}" class="form-select" style="max-width:260px;font-size:13px;">
+          <option value="{{ role_ids.ROLE_TIROCINANTE }}">Medico Tirocinante</option>
+          <option value="{{ role_ids.ROLE_MEDICO_BASE }}">Medico di Base</option>
+          <option value="{{ role_ids.ROLE_INFERMIERE }}">Infermiere</option>
+          <option value="{{ role_ids.ROLE_MED_FORMAZIONE }}">Medico in Formazione</option>
+          <option value="{{ role_ids.ROLE_SPECIALISTA }}">Specialista</option>
+        </select>
+        <button onclick="approva('{{ c._id }}')" class="btn btn-success btn-sm">✅ Approva</button>
+        <button onclick="rifiuta('{{ c._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">❌ Rifiuta</button>
+      </div>
+      {% elif c.stato == 'approvata' %}
+      <div style="font-size:13px;color:var(--text-muted);">
+        ✅ Approvata da <strong>{{ c.approvata_da }}</strong> il {{ c.approvata_il }}
+      </div>
+      {% elif c.stato == 'rifiutata' %}
+      <div style="font-size:13px;color:var(--text-muted);">
+        ❌ Rifiutata da <strong>{{ c.approvata_da }}</strong> — {{ c.motivo_rifiuto }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessuna candidatura ricevuta.</p>
+  {% endif %}
+</div>
+
+<!-- MODAL RIFIUTO -->
+<div id="rifiutoModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">❌ Rifiuta Candidatura</div>
+    <div class="form-group">
+      <label class="form-label">Motivo del rifiuto (sarà inviato al candidato)</label>
+      <textarea id="motivoRifiuto" class="form-textarea" rows="3" placeholder="Es. Profilo non idoneo al ruolo richiesto..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button onclick="chiudiModal()" class="btn btn-ghost">Annulla</button>
+      <button onclick="confermaRifiuto()" class="btn btn-danger">❌ Conferma Rifiuto</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _rifiutoCandId = null;
+
+async function approva(id) {
+  const ruoloId = document.getElementById('ruolo_' + id).value;
+  if (!confirm('Confermi approvazione? Il ruolo verrà assegnato su Discord.')) return;
+  const fd = new FormData();
+  fd.append('candidatura_id', id);
+  fd.append('ruolo_discord_id', ruoloId);
+  const r = await fetch('/dashboard/candidature/approva', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { alert('✅ ' + j.message); location.reload(); }
+  else alert('❌ ' + j.detail);
+}
+
+function rifiuta(id) {
+  _rifiutoCandId = id;
+  document.getElementById('motivoRifiuto').value = '';
+  document.getElementById('rifiutoModal').classList.add('open');
+}
+
+function chiudiModal() {
+  document.getElementById('rifiutoModal').classList.remove('open');
+  _rifiutoCandId = null;
+}
+
+async function confermaRifiuto() {
+  const motivo = document.getElementById('motivoRifiuto').value.trim() || 'Candidatura non idonea.';
+  const fd = new FormData();
+  fd.append('candidatura_id', _rifiutoCandId);
+  fd.append('motivo', motivo);
+  const r = await fetch('/dashboard/candidature/rifiuta', {method:'POST', body:fd});
+  const j = await r.json();
+  chiudiModal();
+  if (j.status === 'ok') location.reload();
+}
+</script>
+{% endblock %}

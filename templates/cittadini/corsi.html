@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Corsi Primo Soccorso — Portale Cittadini{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h1>🩺 Corsi di Primo Soccorso</h1>
+  <p>Impara le tecniche base di primo soccorso con i nostri esperti.</p>
+</div>
+
+<!-- CORSI DISPONIBILI -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+  {% for corso in corsi %}
+  <div class="card" style="margin-bottom:0;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div>
+        <div style="font-size:22px;margin-bottom:6px;">
+          {% if corso.id == 'massaggio_cardiaco' %}❤️{% else %}🫁{% endif %}
+        </div>
+        <div style="font-weight:700;font-size:16px;">{{ corso.nome }}</div>
+      </div>
+      {% if corso.prenotato %}
+        <span class="pill pill-green">✅ Iscritto</span>
+      {% elif corso.posti_disponibili == 0 %}
+        <span class="pill pill-red">❌ Esaurito</span>
+      {% else %}
+        <span class="pill pill-blue">{{ corso.posti_disponibili }} posti</span>
+      {% endif %}
+    </div>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">{{ corso.descrizione }}</p>
+    <div style="display:flex;gap:16px;font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      <span>⏱️ Durata: {{ corso.durata }}</span>
+      <span>👥 Max posti: {{ corso.posti }}</span>
+    </div>
+    {% if not corso.prenotato %}
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="date" id="data_{{ corso.id }}" class="form-input" style="max-width:160px;">
+      <button
+        onclick="prenota('{{ corso.id }}')"
+        class="btn btn-{% if corso.posti_disponibili == 0 %}ghost{% else %}success{% endif %}"
+        {% if corso.posti_disponibili == 0 %}disabled{% endif %}>
+        {% if corso.posti_disponibili == 0 %}Esaurito{% else %}Iscriviti{% endif %}
+      </button>
+    </div>
+    <div id="msg_{{ corso.id }}" style="font-size:13px;margin-top:8px;"></div>
+    {% else %}
+    <div class="alert alert-success" style="margin-bottom:0;">✅ Sei iscritto a questo corso.</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- LE MIE ISCRIZIONI -->
+{% if mie_prenotazioni %}
+<div class="card">
+  <div class="card-title">📋 Le Mie Iscrizioni</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Corso</th>
+        <th>Data Preferita</th>
+        <th>Stato</th>
+        <th>Iscritto il</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in mie_prenotazioni %}
+      <tr>
+        <td><strong>{{ p.corso_nome }}</strong></td>
+        <td>{{ p.data_preferita or '—' }}</td>
+        <td>
+          {% if p.stato == 'confermata' %}
+            <span class="pill pill-green">✅ Confermata</span>
+          {% elif p.stato == 'annullata' %}
+            <span class="pill pill-gray">❌ Annullata</span>
+          {% else %}
+            <span class="pill pill-yellow">{{ p.stato }}</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<script>
+async function prenota(corsoId) {
+  const msg = document.getElementById('msg_' + corsoId);
+  const data = document.getElementById('data_' + corsoId).value;
+  const fd = new FormData();
+  fd.append('corso_id', corsoId);
+  fd.append('data_preferita', data);
+  const r = await fetch('/cittadini/corsi/prenota', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') {
+    msg.textContent = '✅ ' + j.message;
+    msg.style.color = '#4ade80';
+    setTimeout(() => location.reload(), 1500);
+  } else {
+    msg.textContent = '❌ ' + j.detail;
+    msg.style.color = '#f87171';
+  }
+}
+</script>
+{% endblock %}

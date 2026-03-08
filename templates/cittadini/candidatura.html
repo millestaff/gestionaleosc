@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Candidatura Medico — Portale Cittadini{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h1>👨‍⚕️ Candidatura come Medico</h1>
+  <p>Vuoi far parte del team dell'Ospedale San Camillo? Invia la tua candidatura.</p>
+</div>
+
+{% if candidatura_attiva %}
+<div class="alert alert-warning">
+  ⏳ Hai già una candidatura in corso inviata il <strong>{{ candidatura_attiva.timestamp }}</strong>. Attendi la risposta del Direttore.
+</div>
+<div class="card" style="max-width:600px;">
+  <div class="card-title">📋 Stato Candidatura</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      <div style="font-size:12px;color:var(--text-muted);">NOME</div>
+      <div style="font-weight:600;">{{ candidatura_attiva.nome }} {{ candidatura_attiva.cognome }}</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--text-muted);">RUOLO DESIDERATO</div>
+      <div style="font-weight:600;">{{ candidatura_attiva.ruolo_desiderato or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--text-muted);">STATO</div>
+      <span class="pill pill-yellow">⏳ In Attesa di Revisione</span>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--text-muted);">INVIATA IL</div>
+      <div style="font-weight:600;">{{ candidatura_attiva.timestamp }}</div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card" style="max-width:700px;">
+  <div class="card-title">📝 Modulo di Candidatura</div>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label">Nome *</label>
+      <input id="nome" class="form-input" placeholder="Il tuo nome">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cognome *</label>
+      <input id="cognome" class="form-input" placeholder="Il tuo cognome">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Età *</label>
+      <input id="eta" class="form-input" type="number" min="18" max="80" placeholder="Es. 28">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Titolo di Studio *</label>
+      <select id="titolo_studio" class="form-select">
+        <option value="">Seleziona...</option>
+        <option>Laurea in Medicina e Chirurgia</option>
+        <option>Laurea in Infermieristica</option>
+        <option>Laurea in Farmacia</option>
+        <option>Specializzazione Medica</option>
+        <option>Altro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Specializzazione</label>
+      <input id="specializzazione" class="form-input" placeholder="Es. Cardiologia, Chirurgia...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ruolo Desiderato *</label>
+      <select id="ruolo_desiderato" class="form-select">
+        <option value="">Seleziona...</option>
+        <option>Medico Tirocinante</option>
+        <option>Medico di Base</option>
+        <option>Medico in Formazione Specialistica</option>
+        <option>Specialista</option>
+        <option>Infermiere</option>
+      </select>
+    </div>
+    <div class="form-group form-full">
+      <label class="form-label">Esperienza Professionale</label>
+      <textarea id="esperienza" class="form-textarea" rows="3" placeholder="Descrivi la tua esperienza lavorativa precedente..."></textarea>
+    </div>
+    <div class="form-group form-full">
+      <label class="form-label">Lettera di Motivazione *</label>
+      <textarea id="motivazione" class="form-textarea" rows="4" placeholder="Perché vuoi lavorare all'Ospedale San Camillo?"></textarea>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;display:flex;align-items:center;gap:12px;">
+    <button onclick="inviaCandidatura()" class="btn btn-primary">📨 Invia Candidatura</button>
+    <span id="candMsg" style="font-size:13px;"></span>
+  </div>
+</div>
+
+<div class="alert alert-info" style="max-width:700px;">
+  ℹ️ Una volta inviata, la tua candidatura sarà esaminata dal Direttore. Se approvata, riceverai i ruoli Discord e l'accesso al gestionale.
+</div>
+{% endif %}
+
+<script>
+async function inviaCandidatura() {
+  const msg = document.getElementById('candMsg');
+  const required = ['nome','cognome','eta','titolo_studio','ruolo_desiderato','motivazione'];
+  for (const id of required) {
+    if (!document.getElementById(id).value.trim()) {
+      msg.textContent = '⚠️ Compila tutti i campi obbligatori.';
+      msg.style.color = '#f87171';
+      return;
+    }
+  }
+  msg.textContent = 'Invio in corso...';
+  msg.style.color = '#94a3b8';
+  const fd = new FormData();
+  ['nome','cognome','eta','titolo_studio','specializzazione','ruolo_desiderato','esperienza','motivazione'].forEach(id => {
+    fd.append(id, document.getElementById(id).value.trim());
+  });
+  const r = await fetch('/cittadini/candidatura/invia', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') {
+    msg.textContent = '✅ ' + j.message;
+    msg.style.color = '#4ade80';
+    setTimeout(() => location.reload(), 2000);
+  } else {
+    msg.textContent = '❌ ' + j.detail;
+    msg.style.color = '#f87171';
+  }
+}
+</script>
+{% endblock %}

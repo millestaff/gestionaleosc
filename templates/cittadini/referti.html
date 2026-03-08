@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Referti — Portale Cittadini{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h1>📋 I Miei Referti</h1>
+  <p>Consulta i tuoi documenti medici e la cartella clinica.</p>
+</div>
+
+{% if documenti %}
+<div class="card">
+  <div class="card-title">🗂️ Documenti Medici ({{ documenti|length }})</div>
+  <div style="display:grid;gap:12px;">
+    {% for doc in documenti %}
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          {% if doc.categoria == 'referto' %}
+            <span style="font-size:18px;">📄</span>
+            <span class="pill pill-blue">Referto</span>
+          {% else %}
+            <span style="font-size:18px;">📁</span>
+            <span class="pill pill-green">Cartella Clinica</span>
+          {% endif %}
+        </div>
+        <div style="font-weight:600;font-size:15px;">{{ doc.titolo or 'Documento medico' }}</div>
+        {% if doc.descrizione %}
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">{{ doc.descrizione }}</div>
+        {% endif %}
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--text-muted);">
+        <div>Medico: {{ doc.medico or '—' }}</div>
+        <div>{{ doc.timestamp }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:48px;">
+  <div style="font-size:48px;margin-bottom:16px;">📋</div>
+  <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Nessun referto disponibile</div>
+  <div style="color:var(--text-muted);font-size:14px;">I tuoi referti appariranno qui dopo le visite mediche.</div>
+</div>
+{% endif %}
+
+{% endblock %}
