@@ -1,6 +1,6 @@
 import httpx
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
