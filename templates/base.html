@@ -273,6 +273,18 @@
       </a>
       <a href="/dashboard/corsi" class="nav-item {% if active_section=='corsi' %}active{% endif %}">
         <span class="icon">🩺</span> Registro Corsi
+      </a>
+      <a href="/dashboard/pazienti/cerca" class="nav-item {% if active_section=='cerca_paziente' %}active{% endif %}">
+        <span class="icon">🔍</span> Cerca Paziente
+      </a>
+      <a href="/dashboard/cittadini" class="nav-item {% if active_section=='cittadini' %}active{% endif %}">
+        <span class="icon">👥</span> Gestione Cittadini
+      </a>
+      <a href="/dashboard/pazienti/cerca" class="nav-item {% if active_section=='cerca_paziente' %}active{% endif %}">
+        <span class="icon">🔍</span> Cerca Paziente
+      </a>
+      <a href="/dashboard/cittadini" class="nav-item {% if active_section=='cittadini' %}active{% endif %}">
+        <span class="icon">👥</span> Gestione Cittadini
         {% if stats is defined and stats.in_attesa and stats.in_attesa > 0 %}
         <span class="nav-badge-yellow">{{ stats.in_attesa }}</span>
         {% endif %}

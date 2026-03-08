@@ -753,3 +753,20 @@ async def aggiungi_referto(request: Request, user: dict = Depends(require_permis
         "visibile_paziente": True,
     })
     return JSONResponse({"status": "ok"})
+
+
+@router.get("/cittadini", response_class=HTMLResponse)
+async def gestione_cittadini(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    cittadini = await db["cittadini"].find().sort("registrato_il", -1).to_list(200)
+    return templates.TemplateResponse("gestione_cittadini.html", {
+        "request": request,
+        "user": user,
+        "cittadini": cittadini,
+    })
+
+
+@router.post("/cittadini/elimina")
+async def elimina_cittadino(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    form = await request.form()
+    await db["cittadini"].delete_one({"discord_id": form.get("discord_id")})
+    return JSONResponse({"status": "ok"})
