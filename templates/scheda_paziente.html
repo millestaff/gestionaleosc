@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Scheda Paziente — Gestionale{% endblock %}
+{% block page_title %}Scheda Paziente{% endblock %}
+{% block breadcrumb %}Home / Pazienti / {{ paziente.nome }} {{ paziente.cognome }}{% endblock %}
+
+{% block content %}
+
+<!-- DATI ANAGRAFICI -->
+<div class="card" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-color:#dc2626;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div style="font-size:11px;color:#dc2626;font-weight:700;letter-spacing:2px;margin-bottom:6px;">SCHEDA PAZIENTE</div>
+      <div style="font-size:26px;font-weight:700;">{{ paziente.nome }} {{ paziente.cognome }}</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
+        C.F.: <strong>{{ paziente.codice_fiscale or '—' }}</strong>
+        {% if paziente.numero_tessera %} — Tessera: <strong style="color:#dc2626;">{{ paziente.numero_tessera }}</strong>{% endif %}
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:var(--text-muted);">ETÀ</div>
+      <div style="font-size:28px;font-weight:700;color:#dc2626;">{{ eta }} anni</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);">
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">DATA DI NASCITA</div>
+      <div style="font-weight:600;">{{ paziente.data_nascita or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">GRUPPO SANGUIGNO</div>
+      <div style="font-weight:700;color:#dc2626;font-size:18px;">{{ paziente.gruppo_sanguigno or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">ALLERGIE</div>
+      <div style="font-weight:600;color:{{ '#fbbf24' if paziente.allergie else 'var(--text-muted)' }};">{{ paziente.allergie or 'Nessuna' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">INDIRIZZO</div>
+      <div style="font-weight:600;font-size:13px;">{{ paziente.indirizzo or '—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);">STATO</div>
+      <span class="pill pill-green">{{ paziente.stato or 'attivo' }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0;">
+  <button onclick="showTab('referti')" id="tab-referti" class="tab-btn active">📋 Referti ({{ referti|length }})</button>
+  <button onclick="showTab('visite')" id="tab-visite" class="tab-btn">📅 Visite ({{ visite|length }})</button>
+  <button onclick="showTab('corsi')" id="tab-corsi" class="tab-btn">🩺 Corsi ({{ corsi|length }})</button>
+</div>
+
+<!-- TAB REFERTI -->
+<div id="tab-content-referti">
+  {% if not user.readonly %}
+  <div class="card">
+    <div class="card-title">✏️ Aggiungi Referto</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Titolo *</label>
+        <input id="r_titolo" class="form-input" placeholder="Es. Visita cardiologica">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select id="r_categoria" class="form-select">
+          <option value="referto">📄 Referto</option>
+          <option value="cartella_clinica">📁 Cartella Clinica</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Contenuto *</label>
+        <textarea id="r_contenuto" class="form-textarea" rows="4" placeholder="Descrizione, diagnosi, prescrizioni..."></textarea>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+      <button onclick="aggiungiReferto()" class="btn btn-primary">💾 Salva Referto</button>
+      <span id="rMsg" style="font-size:13px;"></span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-title">📋 Referti del Paziente</div>
+    {% if referti %}
+    <div style="display:grid;gap:12px;">
+      {% for r in referti %}
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            {% if r.categoria == 'referto' %}<span class="pill pill-blue">📄 Referto</span>
+            {% else %}<span class="pill pill-green">📁 Cartella Clinica</span>{% endif %}
+            <strong>{{ r.titolo }}</strong>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);">{{ r.medico }} — {{ r.timestamp }}</div>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);white-space:pre-wrap;">{{ r.contenuto }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:24px 0;">Nessun referto.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- TAB VISITE -->
+<div id="tab-content-visite" style="display:none;">
+  <div class="card">
+    <div class="card-title">📅 Storico Visite</div>
+    {% if visite %}
+    <table>
+      <thead>
+        <tr><th>Tipo Visita</th><th>Data Richiesta</th><th>Stato</th><th>Medico</th></tr>
+      </thead>
+      <tbody>
+        {% for v in visite %}
+        <tr>
+          <td><strong>{{ v.tipo_visita }}</strong></td>
+          <td>{{ v.data_richiesta }}</td>
+          <td>
+            {% if v.stato == 'in_attesa' %}<span class="pill pill-yellow">⏳ In Attesa</span>
+            {% elif v.stato == 'in_carico' %}<span class="pill pill-blue">👨‍⚕️ In Carico</span>
+            {% elif v.stato == 'completata' %}<span class="pill pill-green">✅ Completata</span>
+            {% else %}<span class="pill pill-gray">{{ v.stato }}</span>{% endif %}
+          </td>
+          <td>{{ v.medico_assegnato or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:24px 0;">Nessuna visita.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- TAB CORSI -->
+<div id="tab-content-corsi" style="display:none;">
+  <div class="card">
+    <div class="card-title">🩺 Corsi Effettuati</div>
+    {% if corsi %}
+    <table>
+      <thead>
+        <tr><th>Corso</th><th>Data</th><th>Esito</th></tr>
+      </thead>
+      <tbody>
+        {% for c in corsi %}
+        <tr>
+          <td><strong>{{ c.corso_nome }}</strong></td>
+          <td>{{ c.data_preferita or '—' }}</td>
+          <td>
+            {% if c.esito == 'promosso' %}<span class="pill pill-green">✅ Promosso</span>
+            {% elif c.esito == 'bocciato' %}<span class="pill pill-red">❌ Bocciato</span>
+            {% else %}<span class="pill pill-yellow">⏳ In corso</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:24px 0;">Nessun corso.</p>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .15s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+</style>
+
+<script>
+function showTab(name) {
+  ['referti','visite','corsi'].forEach(t => {
+    document.getElementById('tab-content-' + t).style.display = t === name ? '' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+}
+
+async function aggiungiReferto() {
+  const msg = document.getElementById('rMsg');
+  const titolo = document.getElementById('r_titolo').value.trim();
+  const contenuto = document.getElementById('r_contenuto').value.trim();
+  if (!titolo || !contenuto) {
+    msg.textContent = '⚠️ Compila titolo e contenuto.';
+    msg.style.color = '#f87171';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('paziente_id', '{{ paziente._id }}');
+  fd.append('titolo', titolo);
+  fd.append('categoria', document.getElementById('r_categoria').value);
+  fd.append('contenuto', contenuto);
+  const r = await fetch('/dashboard/pazienti/referto/aggiungi', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') {
+    msg.textContent = '✅ Referto salvato.';
+    msg.style.color = '#4ade80';
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    msg.textContent = '❌ ' + j.detail;
+    msg.style.color = '#f87171';
+  }
+}
+</script>
+{% endblock %}

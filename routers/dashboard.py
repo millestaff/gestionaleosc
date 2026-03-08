@@ -685,3 +685,71 @@ async def corso_valuta(request: Request, user: dict = Depends(require_permission
         }}
     )
     return JSONResponse({"status": "ok"})
+
+
+# ─── SCHEDA PAZIENTE ─────────────────────────────────────────────────────────
+
+@router.get("/pazienti/scheda/{paziente_id}", response_class=HTMLResponse)
+async def scheda_paziente(paziente_id: str, request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from bson import ObjectId
+    from datetime import datetime, date
+    paziente = await db["pazienti"].find_one({"_id": ObjectId(paziente_id)})
+    if not paziente:
+        return HTMLResponse("Paziente non trovato", status_code=404)
+
+    # Calcola età
+    eta = "—"
+    try:
+        dn = paziente.get("data_nascita", "")
+        if dn:
+            nascita = datetime.strptime(dn, "%Y-%m-%d")
+            oggi = datetime.now()
+            eta = oggi.year - nascita.year - ((oggi.month, oggi.day) < (nascita.month, nascita.day))
+    except Exception:
+        pass
+
+    referti = await db["documenti"].find({"paziente_id": str(paziente["_id"])}).sort("timestamp", -1).to_list(100)
+    visite = await db["prenotazioni_visite"].find({"discord_id": paziente.get("discord_id", "")}).sort("timestamp", -1).to_list(50)
+    corsi = await db["prenotazioni_corsi"].find({"discord_id": paziente.get("discord_id", "")}).sort("timestamp", -1).to_list(50)
+
+    return templates.TemplateResponse("scheda_paziente.html", {
+        "request": request,
+        "user": user,
+        "paziente": paziente,
+        "eta": eta,
+        "referti": referti,
+        "visite": visite,
+        "corsi": corsi,
+    })
+
+
+@router.get("/pazienti/cerca", response_class=HTMLResponse)
+async def cerca_paziente(request: Request, tessera: str = "", user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    paziente = None
+    if tessera:
+        paziente = await db["pazienti"].find_one({"numero_tessera": tessera.strip().upper()})
+    return templates.TemplateResponse("cerca_paziente.html", {
+        "request": request,
+        "user": user,
+        "paziente": paziente,
+        "tessera": tessera,
+        "non_trovato": tessera and not paziente,
+    })
+
+
+@router.post("/pazienti/referto/aggiungi")
+async def aggiungi_referto(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from bson import ObjectId
+    from datetime import datetime
+    form = await request.form()
+    await db["documenti"].insert_one({
+        "paziente_id": form.get("paziente_id"),
+        "titolo": form.get("titolo"),
+        "categoria": form.get("categoria"),
+        "contenuto": form.get("contenuto"),
+        "medico": user["username"],
+        "medico_id": user["discord_id"],
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "visibile_paziente": True,
+    })
+    return JSONResponse({"status": "ok"})

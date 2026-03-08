@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Cerca Paziente — Gestionale{% endblock %}
+{% block page_title %}Cerca Paziente{% endblock %}
+{% block breadcrumb %}Home / Pazienti / Cerca{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:500px;">
+  <div class="card-title">🔍 Cerca per Numero Tessera</div>
+  <div style="display:flex;gap:10px;">
+    <input id="tessera" class="form-input" placeholder="Es. OSC-2026-00001" value="{{ tessera }}" style="flex:1;">
+    <button onclick="cerca()" class="btn btn-primary">🔍 Cerca</button>
+  </div>
+  {% if non_trovato %}
+  <div class="alert alert-warning" style="margin-top:12px;">⚠️ Nessun paziente trovato con questa tessera.</div>
+  {% endif %}
+</div>
+
+{% if paziente %}
+<div class="card" style="max-width:500px;">
+  <div class="card-title">✅ Paziente Trovato</div>
+  <div style="margin-bottom:16px;">
+    <div style="font-size:20px;font-weight:700;">{{ paziente.nome }} {{ paziente.cognome }}</div>
+    <div style="font-size:13px;color:var(--text-muted);">Tessera: <strong style="color:#dc2626;">{{ paziente.numero_tessera }}</strong></div>
+    <div style="font-size:13px;color:var(--text-muted);">C.F.: {{ paziente.codice_fiscale or '—' }}</div>
+  </div>
+  <a href="/dashboard/pazienti/scheda/{{ paziente._id }}" class="btn btn-primary">📋 Apri Scheda Completa</a>
+</div>
+{% endif %}
+
+<script>
+function cerca() {
+  const t = document.getElementById('tessera').value.trim();
+  if (t) window.location.href = '/dashboard/pazienti/cerca?tessera=' + encodeURIComponent(t);
+}
+document.getElementById('tessera').addEventListener('keypress', e => { if (e.key === 'Enter') cerca(); });
+</script>
+{% endblock %}
