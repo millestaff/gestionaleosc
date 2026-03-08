@@ -1,0 +1,132 @@
+{% extends "cittadini/base.html" %}
+{% block title %}Messaggi — Portale Cittadini{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;margin:0 auto;padding:24px 16px;">
+
+  <h2 style="font-size:22px;font-weight:700;margin-bottom:20px;">✉️ Messaggi</h2>
+
+  <!-- NUOVO MESSAGGIO -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
+    <div style="font-weight:700;font-size:15px;margin-bottom:16px;">📤 Nuovo Messaggio</div>
+    <div style="display:grid;gap:14px;">
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);margin-bottom:6px;display:block;">DESTINATARIO *</label>
+        <select id="m_dest" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;">
+          <option value="">Seleziona...</option>
+          <optgroup label="👤 Singoli Medici">
+            {% for d in dipendenti %}
+            <option value="paziente:{{ d.discord_id }}">{{ d.username }} — {{ d.ruolo or 'Medico' }}</option>
+            {% endfor %}
+          </optgroup>
+          <optgroup label="🏥 Reparti">
+            {% for r in reparti %}
+            <option value="{{ r.id }}">{{ r.nome }}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);margin-bottom:6px;display:block;">OGGETTO *</label>
+        <input id="m_oggetto" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;box-sizing:border-box;" placeholder="Es. Richiesta informazioni visita">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);margin-bottom:6px;display:block;">MESSAGGIO *</label>
+        <textarea id="m_corpo" rows="4" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;box-sizing:border-box;resize:vertical;" placeholder="Scrivi il tuo messaggio..."></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button onclick="invia()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-weight:600;cursor:pointer;">📤 Invia</button>
+        <span id="mMsg" style="font-size:13px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+    <button onclick="showTab('ricevuti')" id="tab-ricevuti" class="mtab active">📥 Ricevuti ({{ ricevuti|length }})</button>
+    <button onclick="showTab('inviati')" id="tab-inviati" class="mtab">📤 Inviati ({{ inviati|length }})</button>
+  </div>
+
+  <!-- RICEVUTI -->
+  <div id="content-ricevuti">
+    {% if ricevuti %}
+    {% for m in ricevuti %}
+    <div onclick="toggleMsg('r{{ loop.index }}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <span style="font-weight:700;">{{ m.oggetto }}</span>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Da: {{ m.mittente }}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);">{{ m.timestamp }}</div>
+      </div>
+      <div id="r{{ loop.index }}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:14px;white-space:pre-wrap;">{{ m.corpo }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun messaggio ricevuto.</p>
+    {% endif %}
+  </div>
+
+  <!-- INVIATI -->
+  <div id="content-inviati" style="display:none;">
+    {% if inviati %}
+    {% for m in inviati %}
+    <div onclick="toggleMsg('i{{ loop.index }}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <span style="font-weight:700;">{{ m.oggetto }}</span>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">A: {{ m.destinatario }}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);">{{ m.timestamp }}</div>
+      </div>
+      <div id="i{{ loop.index }}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:14px;white-space:pre-wrap;">{{ m.corpo }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun messaggio inviato.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+.mtab { background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);padding:10px 16px;cursor:pointer;font-size:14px;font-weight:500;margin-bottom:-1px; }
+.mtab:hover { color:var(--text); }
+.mtab.active { color:#dc2626;border-bottom-color:#dc2626; }
+</style>
+
+<script>
+function showTab(t) {
+  ['ricevuti','inviati'].forEach(x => {
+    document.getElementById('content-' + x).style.display = x === t ? '' : 'none';
+    document.getElementById('tab-' + x).classList.toggle('active', x === t);
+  });
+}
+function toggleMsg(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+async function invia() {
+  const msg = document.getElementById('mMsg');
+  const dest = document.getElementById('m_dest').value;
+  const ogg = document.getElementById('m_oggetto').value.trim();
+  const corpo = document.getElementById('m_corpo').value.trim();
+  if (!dest || !ogg || !corpo) {
+    msg.textContent = '⚠️ Compila tutti i campi.';
+    msg.style.color = '#f87171';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('destinatario', dest);
+  fd.append('oggetto', ogg);
+  fd.append('corpo', corpo);
+  const r = await fetch('/cittadini/messaggi/invia', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') {
+    msg.textContent = '✅ Messaggio inviato!';
+    msg.style.color = '#4ade80';
+    setTimeout(() => location.reload(), 1200);
+  }
+}
+</script>
+{% endblock %}
