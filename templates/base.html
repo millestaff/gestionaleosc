@@ -270,6 +270,9 @@
       </a>
       <a href="/dashboard/candidature" class="nav-item {% if active_section=='candidature' %}active{% endif %}">
         <span class="icon">📋</span> Candidature
+      </a>
+      <a href="/dashboard/corsi" class="nav-item {% if active_section=='corsi' %}active{% endif %}">
+        <span class="icon">🩺</span> Registro Corsi
         {% if stats is defined and stats.in_attesa and stats.in_attesa > 0 %}
         <span class="nav-badge-yellow">{{ stats.in_attesa }}</span>
         {% endif %}

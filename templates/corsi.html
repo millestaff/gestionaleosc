@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Registro Corsi — Gestionale{% endblock %}
+{% block page_title %}Registro Corsi Primo Soccorso{% endblock %}
+{% block breadcrumb %}Home / Corsi{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--info);">{{ iscrizioni|length }}</div>
+    <div style="font-size:12px;color:var(--text-muted);">Iscrizioni Totali</div>
+  </div>
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--success);">
+      {{ iscrizioni|selectattr('esito','equalto','promosso')|list|length }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">Promossi</div>
+  </div>
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--danger);">
+      {{ iscrizioni|selectattr('esito','equalto','bocciato')|list|length }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">Bocciati</div>
+  </div>
+  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
+    <div style="font-size:22px;font-weight:700;color:var(--warning);">
+      {{ iscrizioni|selectattr('esito','undefined')|list|length }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">Da Valutare</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">📋 Partecipanti</div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <button onclick="filtra('tutti')" class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtra('massaggio_cardiaco')" class="btn btn-ghost btn-sm">❤️ Massaggio Cardiaco</button>
+    <button onclick="filtra('heimlich')" class="btn btn-ghost btn-sm">🫁 Heimlich</button>
+  </div>
+  {% if iscrizioni %}
+  <table>
+    <thead>
+      <tr>
+        <th>Utente</th>
+        <th>Corso</th>
+        <th>Data Preferita</th>
+        <th>Iscritto il</th>
+        <th>Esito</th>
+        {% if user.permission >= 10 and not user.readonly %}<th>Azioni</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in iscrizioni %}
+      <tr class="riga-corso" data-corso="{{ i.corso_id }}">
+        <td>
+          <strong>{{ i.username }}</strong>
+          <div style="font-size:11px;color:var(--text-muted);">ID: {{ i.discord_id }}</div>
+        </td>
+        <td>{{ i.corso_nome }}</td>
+        <td>{{ i.data_preferita or '—' }}</td>
+        <td style="font-size:12px;color:var(--text-muted);">{{ i.timestamp }}</td>
+        <td>
+          {% if i.esito == 'promosso' %}
+            <span class="pill pill-green">✅ Promosso</span>
+          {% elif i.esito == 'bocciato' %}
+            <span class="pill pill-red">❌ Bocciato</span>
+          {% else %}
+            <span class="pill pill-yellow">⏳ Da valutare</span>
+          {% endif %}
+        </td>
+        {% if user.permission >= 10 and not user.readonly %}
+        <td style="display:flex;gap:6px;">
+          <button onclick="valuta('{{ i._id }}','promosso')" class="btn btn-success btn-sm">✅</button>
+          <button onclick="valuta('{{ i._id }}','bocciato')" class="btn btn-ghost btn-sm" style="color:var(--danger);">❌</button>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessuna iscrizione ai corsi.</p>
+  {% endif %}
+</div>
+
+<script>
+function filtra(corso) {
+  document.querySelectorAll('.riga-corso').forEach(r => {
+    r.style.display = (corso === 'tutti' || r.dataset.corso === corso) ? '' : 'none';
+  });
+}
+async function valuta(id, esito) {
+  const fd = new FormData();
+  fd.append('iscrizione_id', id);
+  fd.append('esito', esito);
+  const r = await fetch('/dashboard/corsi/valuta', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+</script>
+{% endblock %}

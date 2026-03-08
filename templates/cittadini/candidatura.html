@@ -60,20 +60,9 @@
         <option>Altro</option>
       </select>
     </div>
-    <div class="form-group">
-      <label class="form-label">Specializzazione</label>
-      <input id="specializzazione" class="form-input" placeholder="Es. Cardiologia, Chirurgia...">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Ruolo Desiderato *</label>
-      <select id="ruolo_desiderato" class="form-select">
-        <option value="">Seleziona...</option>
-        <option>Medico Tirocinante</option>
-        <option>Medico di Base</option>
-        <option>Medico in Formazione Specialistica</option>
-        <option>Specialista</option>
-        <option>Infermiere</option>
-      </select>
+    <div class="form-group form-full">
+      <label class="form-label">Note aggiuntive (es. reparto di interesse)</label>
+      <input id="specializzazione" class="form-input" placeholder="Es. sono interessato alla cardiologia...">
     </div>
     <div class="form-group form-full">
       <label class="form-label">Esperienza Professionale</label>
@@ -99,7 +88,7 @@
 <script>
 async function inviaCandidatura() {
   const msg = document.getElementById('candMsg');
-  const required = ['nome','cognome','eta','titolo_studio','ruolo_desiderato','motivazione'];
+  const required = ['nome','cognome','eta','titolo_studio','motivazione'];
   for (const id of required) {
     if (!document.getElementById(id).value.trim()) {
       msg.textContent = '⚠️ Compila tutti i campi obbligatori.';
@@ -110,7 +99,8 @@ async function inviaCandidatura() {
   msg.textContent = 'Invio in corso...';
   msg.style.color = '#94a3b8';
   const fd = new FormData();
-  ['nome','cognome','eta','titolo_studio','specializzazione','ruolo_desiderato','esperienza','motivazione'].forEach(id => {
+  fd.append('ruolo_desiderato', 'Medico Tirocinante');
+  ['nome','cognome','eta','titolo_studio','specializzazione','esperienza','motivazione'].forEach(id => {
     fd.append(id, document.getElementById(id).value.trim());
   });
   const r = await fetch('/cittadini/candidatura/invia', {method:'POST', body:fd});
