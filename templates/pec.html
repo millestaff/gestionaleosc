@@ -26,6 +26,11 @@
           <option value="Farmacia">💊 Farmacia</option>
           <option value="Amministrazione">📋 Amministrazione</option>
         </optgroup>
+        <optgroup label="🏥 Pazienti">
+          {% for c in cittadini %}
+          <option value="paziente:{{ c.discord_id }}">🧑 {{ c.username }}{% if c.tessera %} — {{ c.tessera.numero }}{% endif %}</option>
+          {% endfor %}
+        </optgroup>
         <optgroup label="👥 Categorie Personale">
           <option value="Tutto il Personale">👥 Tutto il Personale</option>
           <option value="Dirigenza">💼 Dirigenza</option>

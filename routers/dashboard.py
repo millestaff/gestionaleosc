@@ -308,9 +308,11 @@ async def add_comunicato(request: Request, user: dict = Depends(require_permissi
 async def pec(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     pec_list = await db["pec"].find().sort("timestamp", -1).to_list(50)
     dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
+    cittadini = await db["cittadini"].find().sort("username", 1).to_list(200)
     return templates.TemplateResponse("pec.html", {
         "request": request, "user": user,
         "pec_list": pec_list, "dipendenti": dipendenti,
+        "cittadini": cittadini,
         "active_section": "pec",
     })
 
