@@ -602,7 +602,7 @@ async def messaggi_page(request: Request):
     from datetime import datetime
     cittadino = await require_cittadino(request)
     if isinstance(cittadino, RedirectResponse): return cittadino
-    db = await _get_db().__anext__()
+    db = _get_db()
     messaggi_ricevuti = await db["pec"].find({
         "destinatario": f"cittadino:{cittadino['discord_id']}"
     }).sort("timestamp", -1).to_list(50)
@@ -634,7 +634,7 @@ async def messaggi_invia(request: Request):
     from datetime import datetime
     cittadino = await require_cittadino(request)
     if isinstance(cittadino, RedirectResponse): return cittadino
-    db = await _get_db().__anext__()
+    db = _get_db()
     form = await request.form()
     await db["pec"].insert_one({
         "destinatario": form.get("destinatario"),
