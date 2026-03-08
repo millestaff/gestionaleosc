@@ -148,13 +148,9 @@ async def cittadini_callback(request: Request, code: str):
     username = user.get("username", "")
     avatar = user.get("avatar")
 
-    # Controlla che non sia già un dipendente
+    # Salva se è un dipendente per mostrare funzioni extra
     dipendente = await db["dipendenti"].find_one({"discord_id": discord_id})
-    if dipendente:
-        return templates.TemplateResponse("errore.html", {
-            "request": request,
-            "motivo": "Questo account Discord è già registrato come personale ospedaliero. Usa il portale staff."
-        })
+    is_medico = dipendente is not None
 
     # Registra o aggiorna cittadino
     existing = await db["cittadini"].find_one({"discord_id": discord_id})
@@ -526,16 +522,25 @@ async def corsi_page(request: Request):
     prenotati = {p["corso_id"] for p in mie_prenotazioni if p.get("stato") != "annullata"}
 
     # Conta posti disponibili per ogni corso
+    corsi_db = await db["corsi"].find({"attivo": True}).to_list(50)
     corsi_con_posti = []
-    for corso in CORSI_DISPONIBILI:
+    for corso in corsi_db:
+        corso_id = str(corso["_id"])
         prenotati_count = await db["prenotazioni_corsi"].count_documents({
-            "corso_id": corso["id"],
+            "corso_id": corso_id,
             "stato": {"$ne": "annullata"},
         })
         corsi_con_posti.append({
-            **corso,
-            "posti_disponibili": max(0, corso["posti"] - prenotati_count),
-            "prenotato": corso["id"] in prenotati,
+            "id": corso_id,
+            "nome": corso["nome"],
+            "descrizione": corso.get("note", ""),
+            "durata": "Vedi dettagli",
+            "data": corso.get("data", ""),
+            "ora": corso.get("ora", ""),
+            "luogo": corso.get("luogo", ""),
+            "posti": corso["max_partecipanti"],
+            "posti_disponibili": max(0, corso["max_partecipanti"] - prenotati_count),
+            "prenotato": corso_id in prenotati,
         })
 
     return templates.TemplateResponse("corsi.html", {

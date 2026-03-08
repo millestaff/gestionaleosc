@@ -5,97 +5,173 @@
 
 {% block content %}
 
-<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
-    <div style="font-size:22px;font-weight:700;color:var(--info);">{{ iscrizioni|length }}</div>
-    <div style="font-size:12px;color:var(--text-muted);">Iscrizioni Totali</div>
-  </div>
-  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
-    <div style="font-size:22px;font-weight:700;color:var(--success);">
-      {{ iscrizioni|selectattr('esito','equalto','promosso')|list|length }}
+{% if user.permission >= 100 and not user.readonly %}
+<div class="card">
+  <div class="card-title">➕ Crea Nuovo Corso</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+    <div class="form-group">
+      <label class="form-label">Tipologia *</label>
+      <select id="c_tipo" class="form-select">
+        <option value="massaggio_cardiaco">❤️ Massaggio Cardiaco (BLS-D)</option>
+        <option value="heimlich">🫁 Manovra di Heimlich</option>
+      </select>
     </div>
-    <div style="font-size:12px;color:var(--text-muted);">Promossi</div>
-  </div>
-  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
-    <div style="font-size:22px;font-weight:700;color:var(--danger);">
-      {{ iscrizioni|selectattr('esito','equalto','bocciato')|list|length }}
+    <div class="form-group">
+      <label class="form-label">Data *</label>
+      <input id="c_data" type="date" class="form-input">
     </div>
-    <div style="font-size:12px;color:var(--text-muted);">Bocciati</div>
-  </div>
-  <div class="card" style="margin-bottom:0;padding:16px 24px;min-width:140px;">
-    <div style="font-size:22px;font-weight:700;color:var(--warning);">
-      {{ iscrizioni|selectattr('esito','undefined')|list|length }}
+    <div class="form-group">
+      <label class="form-label">Ora *</label>
+      <input id="c_ora" type="time" class="form-input">
     </div>
-    <div style="font-size:12px;color:var(--text-muted);">Da Valutare</div>
+    <div class="form-group">
+      <label class="form-label">Luogo *</label>
+      <input id="c_luogo" class="form-input" placeholder="Es. Aula 3, Piano 2">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Max Partecipanti *</label>
+      <input id="c_max" type="number" min="1" max="100" value="20" class="form-input">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <input id="c_note" class="form-input" placeholder="Informazioni aggiuntive...">
+    </div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:10px;align-items:center;">
+    <button onclick="creaCOrso()" class="btn btn-primary">➕ Crea Corso</button>
+    <span id="cMsg" style="font-size:13px;"></span>
   </div>
 </div>
+{% endif %}
 
+<!-- LISTA CORSI -->
 <div class="card">
-  <div class="card-title">📋 Partecipanti</div>
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-    <button onclick="filtra('tutti')" class="btn btn-ghost btn-sm">Tutti</button>
-    <button onclick="filtra('massaggio_cardiaco')" class="btn btn-ghost btn-sm">❤️ Massaggio Cardiaco</button>
-    <button onclick="filtra('heimlich')" class="btn btn-ghost btn-sm">🫁 Heimlich</button>
-  </div>
-  {% if iscrizioni %}
-  <table>
-    <thead>
-      <tr>
-        <th>Utente</th>
-        <th>Corso</th>
-        <th>Data Preferita</th>
-        <th>Iscritto il</th>
-        <th>Esito</th>
-        {% if user.permission >= 10 and not user.readonly %}<th>Azioni</th>{% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for i in iscrizioni %}
-      <tr class="riga-corso" data-corso="{{ i.corso_id }}">
-        <td>
-          <strong>{{ i.username }}</strong>
-          <div style="font-size:11px;color:var(--text-muted);">ID: {{ i.discord_id }}</div>
-        </td>
-        <td>{{ i.corso_nome }}</td>
-        <td>{{ i.data_preferita or '—' }}</td>
-        <td style="font-size:12px;color:var(--text-muted);">{{ i.timestamp }}</td>
-        <td>
-          {% if i.esito == 'promosso' %}
-            <span class="pill pill-green">✅ Promosso</span>
-          {% elif i.esito == 'bocciato' %}
-            <span class="pill pill-red">❌ Bocciato</span>
+  <div class="card-title">📋 Corsi Disponibili</div>
+  {% if corsi %}
+  <div style="display:grid;gap:16px;">
+    {% for corso in corsi %}
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:700;font-size:16px;">
+            {% if corso.tipo == 'massaggio_cardiaco' %}❤️{% else %}🫁{% endif %}
+            {{ corso.nome }}
+          </div>
+          <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
+            📅 {{ corso.data }} alle {{ corso.ora }} — 📍 {{ corso.luogo }}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          {% if corso.attivo %}
+            <span class="pill pill-green">✅ Attivo</span>
           {% else %}
-            <span class="pill pill-yellow">⏳ Da valutare</span>
+            <span class="pill pill-gray">⏸️ Inattivo</span>
           {% endif %}
-        </td>
-        {% if user.permission >= 10 and not user.readonly %}
-        <td style="display:flex;gap:6px;">
-          <button onclick="valuta('{{ i._id }}','promosso')" class="btn btn-success btn-sm">✅</button>
-          <button onclick="valuta('{{ i._id }}','bocciato')" class="btn btn-ghost btn-sm" style="color:var(--danger);">❌</button>
-        </td>
-        {% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+          <span class="pill pill-blue">👥 {{ corso.iscritti }}/{{ corso.max_partecipanti }}</span>
+          {% if user.permission >= 100 and not user.readonly %}
+          <button onclick="toggleCorso('{{ corso._id }}', {{ 'false' if corso.attivo else 'true' }})"
+            class="btn btn-ghost btn-sm">
+            {% if corso.attivo %}⏸️ Disattiva{% else %}▶️ Attiva{% endif %}
+          </button>
+          <button onclick="eliminaCorso('{{ corso._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
+          {% endif %}
+        </div>
+      </div>
+      {% if corso.note %}
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">📝 {{ corso.note }}</div>
+      {% endif %}
+
+      <!-- PARTECIPANTI -->
+      {% if corso.partecipanti %}
+      <details>
+        <summary style="cursor:pointer;font-size:13px;color:var(--text-muted);margin-bottom:8px;">
+          👥 Vedi partecipanti ({{ corso.iscritti }})
+        </summary>
+        <table style="margin-top:8px;">
+          <thead>
+            <tr>
+              <th>Utente</th>
+              <th>Iscritto il</th>
+              <th>Esito</th>
+              {% if not user.readonly %}<th>Valuta</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in corso.partecipanti %}
+            <tr>
+              <td><strong>{{ p.username }}</strong></td>
+              <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+              <td>
+                {% if p.esito == 'promosso' %}
+                  <span class="pill pill-green">✅ Promosso</span>
+                {% elif p.esito == 'bocciato' %}
+                  <span class="pill pill-red">❌ Bocciato</span>
+                {% else %}
+                  <span class="pill pill-yellow">⏳ Da valutare</span>
+                {% endif %}
+              </td>
+              {% if not user.readonly %}
+              <td style="display:flex;gap:6px;">
+                <button onclick="valuta('{{ p._id }}','promosso')" class="btn btn-success btn-sm">✅</button>
+                <button onclick="valuta('{{ p._id }}','bocciato')" class="btn btn-ghost btn-sm" style="color:var(--danger);">❌</button>
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+      {% else %}
+      <div style="font-size:13px;color:var(--text-muted);">Nessun iscritto ancora.</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
   {% else %}
-  <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessuna iscrizione ai corsi.</p>
+  <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun corso creato.</p>
   {% endif %}
 </div>
 
 <script>
-function filtra(corso) {
-  document.querySelectorAll('.riga-corso').forEach(r => {
-    r.style.display = (corso === 'tutti' || r.dataset.corso === corso) ? '' : 'none';
-  });
+async function creaCOrso() {
+  const msg = document.getElementById('cMsg');
+  const fd = new FormData();
+  fd.append('tipo', document.getElementById('c_tipo').value);
+  fd.append('data', document.getElementById('c_data').value);
+  fd.append('ora', document.getElementById('c_ora').value);
+  fd.append('luogo', document.getElementById('c_luogo').value);
+  fd.append('max_partecipanti', document.getElementById('c_max').value);
+  fd.append('note', document.getElementById('c_note').value);
+  if (!fd.get('data') || !fd.get('ora') || !fd.get('luogo')) {
+    msg.textContent = '⚠️ Compila tutti i campi obbligatori.';
+    msg.style.color = '#f87171';
+    return;
+  }
+  const r = await fetch('/dashboard/corsi/crea', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') { location.reload(); }
+  else { msg.textContent = '❌ ' + j.detail; msg.style.color = '#f87171'; }
+}
+async function toggleCorso(id, attivo) {
+  const fd = new FormData();
+  fd.append('corso_id', id);
+  fd.append('attivo', attivo);
+  await fetch('/dashboard/corsi/toggle', {method:'POST', body:fd});
+  location.reload();
+}
+async function eliminaCorso(id) {
+  if (!confirm('Eliminare questo corso?')) return;
+  const fd = new FormData();
+  fd.append('corso_id', id);
+  await fetch('/dashboard/corsi/elimina', {method:'POST', body:fd});
+  location.reload();
 }
 async function valuta(id, esito) {
   const fd = new FormData();
   fd.append('iscrizione_id', id);
   fd.append('esito', esito);
-  const r = await fetch('/dashboard/corsi/valuta', {method:'POST', body:fd});
-  const j = await r.json();
-  if (j.status === 'ok') location.reload();
+  await fetch('/dashboard/corsi/valuta', {method:'POST', body:fd});
+  location.reload();
 }
 </script>
 {% endblock %}
