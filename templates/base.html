@@ -267,6 +267,9 @@
       <div class="nav-label">Gestione</div>
       <a href="/dashboard/utenti" class="nav-item {% if active_section=='utenti' %}active{% endif %}">
         <span class="icon">👤</span> Gestione Utenti
+      </a>
+      <a href="/dashboard/candidature" class="nav-item {% if active_section=='candidature' %}active{% endif %}">
+        <span class="icon">📋</span> Candidature
         {% if stats is defined and stats.in_attesa and stats.in_attesa > 0 %}
         <span class="nav-badge-yellow">{{ stats.in_attesa }}</span>
         {% endif %}
