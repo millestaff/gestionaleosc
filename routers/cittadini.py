@@ -614,7 +614,7 @@ async def messaggi_page(request: Request):
         "mittente_tipo": "cittadino"
     }).sort("timestamp", -1).to_list(50)
     dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
-    return templates.TemplateResponse("cittadini/messaggi.html", {
+    return templates.TemplateResponse("messaggi.html", {
         "request": request,
         "cittadino": cittadino,
         "ricevuti": messaggi_ricevuti,
