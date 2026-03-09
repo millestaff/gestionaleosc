@@ -600,7 +600,10 @@ async def corso_prenota(request: Request):
 async def messaggi_page(request: Request):
     from database import get_db as _get_db
     from datetime import datetime
-    cittadino = await require_cittadino(request)
+    try:
+        cittadino = await require_cittadino(request)
+    except Exception as e:
+        return HTMLResponse(f"Errore require_cittadino: {e}", status_code=500)
     if isinstance(cittadino, RedirectResponse): return cittadino
     db = _get_db()
     messaggi_ricevuti = await db["pec"].find({
