@@ -313,9 +313,11 @@ async def pec(request: Request, user: dict = Depends(get_current_user), db=Depen
         pec_list = await db["pec"].find({
             "$or": [
                 {"mittente": user["username"]},
-                {"destinatario": user["username"]},
+                {"mittente_id": user["discord_id"]},
+                {"destinatario": f"dipendente:{user['discord_id']}"},
                 {"destinatario": f"paziente:{user['discord_id']}"},
-                {"destinatario": {"$regex": f"reparto:"}},
+                {"destinatario": f"cittadino:{user['discord_id']}"},
+                {"destinatario": {"$regex": "reparto:"}},
             ]
         }).sort("timestamp", -1).to_list(100)
     dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)

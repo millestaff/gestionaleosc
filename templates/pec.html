@@ -13,7 +13,7 @@
       <select name="destinatario" class="form-select">
         <optgroup label="👤 Singoli Medici">
           {% for d in dipendenti %}
-          <option value="{{ d.nome }} {{ d.cognome }} ({{ d.ruolo }})">
+          <option value="dipendente:{{ d.discord_id }}">
             {{ d.nome }} {{ d.cognome }} — {{ d.ruolo }}
           </option>
           {% endfor %}
