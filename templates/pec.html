@@ -137,5 +137,10 @@ async function eliminaPec(id) {
   const j = await r.json();
   if (j.status === 'ok') { location.reload(); }
 }
+
+function togglePec(id) {
+    const el = document.getElementById('pec-body-' + id);
+    el.style.display = el.style.display === 'none' ? '' : 'none';
+}
 </script>
 {% endblock %}

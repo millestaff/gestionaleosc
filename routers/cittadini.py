@@ -639,9 +639,11 @@ async def messaggi_invia(request: Request):
     if isinstance(cittadino, RedirectResponse): return cittadino
     db = _get_db()
     form = await request.form()
+    destinatario = form.get("destinatario")
+    oggetto = form.get("oggetto")
     await db["pec"].insert_one({
-        "destinatario": form.get("destinatario"),
-        "oggetto": form.get("oggetto"),
+        "destinatario": destinatario,
+        "oggetto": oggetto,
         "corpo": form.get("corpo"),
         "priorita": "normale",
         "mittente": cittadino["username"],
@@ -650,4 +652,22 @@ async def messaggi_invia(request: Request):
         "stato": "inviata",
         "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
     })
+    # Notifica DM al destinatario staff
+    try:
+        from bot.cogs import get_bot
+        bot = get_bot()
+        if bot and destinatario and ":" in destinatario:
+            discord_id = int(destinatario.split(":")[1])
+            dest_user = await bot.fetch_user(discord_id)
+            if dest_user:
+                await dest_user.send(
+                    f"📨 **Nuova PEC dal Portale Cittadini**\n"
+                    f"**Da:** {cittadino['username']}\n"
+                    f"**Oggetto:** {oggetto}\n"
+                    f"Accedi al gestionale per leggere il messaggio."
+                )
+        elif bot and destinatario and destinatario.startswith("reparto:"):
+            pass  # Notifica al reparto non implementata
+    except Exception as e:
+        print(f"[PEC cittadini] Errore DM: {e}")
     return JSONResponse({"status": "ok"})

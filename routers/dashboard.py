@@ -306,7 +306,18 @@ async def add_comunicato(request: Request, user: dict = Depends(require_permissi
 # ── PEC ───────────────────────────────────────────────────────────────────────
 @router.get("/pec", response_class=HTMLResponse)
 async def pec(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
-    pec_list = await db["pec"].find().sort("timestamp", -1).to_list(50)
+    # Dirigenza vede tutto, altri vedono solo le proprie
+    if user.get("permission", 0) >= 50:
+        pec_list = await db["pec"].find().sort("timestamp", -1).to_list(200)
+    else:
+        pec_list = await db["pec"].find({
+            "$or": [
+                {"mittente": user["username"]},
+                {"destinatario": user["username"]},
+                {"destinatario": f"paziente:{user['discord_id']}"},
+                {"destinatario": {"$regex": f"reparto:"}},
+            ]
+        }).sort("timestamp", -1).to_list(100)
     dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
     cittadini = await db["cittadini"].find().sort("username", 1).to_list(200)
     return templates.TemplateResponse("pec.html", {
@@ -318,16 +329,49 @@ async def pec(request: Request, user: dict = Depends(get_current_user), db=Depen
 
 @router.post("/pec/send")
 async def send_pec(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
+    from bot.cogs import get_bot
     form = await request.form()
+    destinatario = form.get("destinatario")
+    oggetto = form.get("oggetto")
+    corpo = form.get("corpo")
     await db["pec"].insert_one({
-        "destinatario": form.get("destinatario"),
-        "oggetto":      form.get("oggetto"),
-        "corpo":        form.get("corpo"),
+        "destinatario": destinatario,
+        "oggetto":      oggetto,
+        "corpo":        corpo,
         "priorita":     form.get("priorita", "normale"),
         "mittente":     user["username"],
+        "mittente_id":  user["discord_id"],
         "stato":        "inviata",
         "timestamp":    datetime.now().strftime("%d/%m/%Y %H:%M"),
     })
+    # Notifica DM al destinatario
+    try:
+        bot = get_bot()
+        if bot and destinatario.startswith("paziente:") or destinatario.startswith("cittadino:"):
+            discord_id = int(destinatario.split(":")[1])
+            dest_user = await bot.fetch_user(discord_id)
+            if dest_user:
+                await dest_user.send(
+                    f"📨 **Nuova PEC ricevuta** dall'Ospedale San Camillo\n"
+                    f"**Oggetto:** {oggetto}\n"
+                    f"**Da:** {user['username']}\n"
+                    f"Accedi al portale per leggere il messaggio completo."
+                )
+        elif destinatario and ":" not in destinatario:
+            # Destinatario è uno staff — cerca il suo discord_id
+            dest = await db["dipendenti"].find_one({"username": destinatario})
+            if dest and dest.get("discord_id"):
+                discord_id = int(dest["discord_id"])
+                dest_user = await bot.fetch_user(discord_id)
+                if dest_user:
+                    await dest_user.send(
+                        f"📨 **Nuova PEC ricevuta**\n"
+                        f"**Oggetto:** {oggetto}\n"
+                        f"**Da:** {user['username']}\n"
+                        f"Accedi al gestionale per leggere il messaggio completo."
+                    )
+    except Exception as e:
+        print(f"[PEC] Errore notifica DM: {e}")
     return {"status": "ok", "message": "PEC inviata con successo."}
 
 
