@@ -818,3 +818,11 @@ async def elimina_cittadino(request: Request, user: dict = Depends(require_permi
     form = await request.form()
     await db["cittadini"].delete_one({"discord_id": form.get("discord_id")})
     return JSONResponse({"status": "ok"})
+
+
+@router.post("/pec/elimina")
+async def elimina_pec(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    await db["pec"].delete_one({"_id": ObjectId(form.get("pec_id"))})
+    return JSONResponse({"status": "ok"})
