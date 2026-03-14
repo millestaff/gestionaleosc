@@ -800,7 +800,12 @@ async def scheda_paziente(paziente_id: str, request: Request, user: dict = Depen
     except Exception:
         pass
 
-    referti = await db["documenti"].find({"paziente_id": str(paziente["_id"])}).sort("timestamp", -1).to_list(100)
+    referti = await db["documenti"].find({
+        "$or": [
+            {"paziente_id": str(paziente["_id"])},
+            {"paziente_id": paziente.get("discord_id", "")},
+        ]
+    }).sort("timestamp", -1).to_list(100)
     visite = await db["prenotazioni_visite"].find({"discord_id": paziente.get("discord_id", "")}).sort("timestamp", -1).to_list(50)
     corsi = await db["prenotazioni_corsi"].find({"discord_id": paziente.get("discord_id", "")}).sort("timestamp", -1).to_list(50)
 
