@@ -96,7 +96,7 @@
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">
           👤 {{ doc.nome_paziente if doc.nome_paziente else doc.paziente_id }}
           {% if doc.nome_paziente %}
-          <a href="/dashboard/pazienti/cerca?tessera=" style="font-size:11px;color:var(--primary);margin-left:6px;">→ Scheda</a>
+          <a href="/dashboard/pazienti/scheda/{{ doc.paziente_id }}" style="font-size:11px;color:var(--primary);margin-left:6px;">→ Scheda</a>
           {% endif %}
         </div>
         {% endif %}
