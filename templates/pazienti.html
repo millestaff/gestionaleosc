@@ -161,7 +161,7 @@
           <td style="display:flex;gap:6px;flex-wrap:wrap;">
             <a href="/dashboard/pazienti/scheda/{{ p._id }}" class="btn btn-ghost btn-sm">📋 Scheda</a>
             {% if user.permission >= 100 and not user.readonly %}
-            <button onclick="archiviaDeceduto('{{ p._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">☠️ Deceduto</button>
+            <select onchange="aggiornaStato(`{{ p._id }}`, this.value)" class="form-select" style="font-size:12px;padding:4px 8px;max-width:140px;"><option value="">Cambia stato...</option><option value="ricoverato">🛏️ Ricoverato</option><option value="osservazione">🔍 Osservazione</option><option value="critico">🚨 Critico</option><option value="dimesso">✅ Dimesso</option><option value="deceduto">☠️ Deceduto</option></select>
             {% endif %}
           </td>
         </tr>

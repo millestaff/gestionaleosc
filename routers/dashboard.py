@@ -164,6 +164,24 @@ async def documenti(request: Request, user: dict = Depends(get_current_user), db
     if permission < 50:
         query["categoria"] = {"$in": CATEGORIE_BASE}
     docs = await db["documenti"].find(query).sort("timestamp", -1).to_list(100)
+    # Aggiungi nome paziente ai documenti con paziente_id
+    cittadini = await db["cittadini"].find().to_list(200)
+    cit_map = {c["discord_id"]: c["username"] for c in cittadini}
+    for doc in docs:
+        pid = doc.get("paziente_id", "")
+        if pid:
+            # Cerca prima nei cittadini per discord_id
+            if pid in cit_map:
+                doc["nome_paziente"] = cit_map[pid]
+            else:
+                # Cerca nei pazienti per _id
+                from bson import ObjectId
+                try:
+                    paz = await db["pazienti"].find_one({"_id": ObjectId(pid)})
+                    if paz:
+                        doc["nome_paziente"] = f"{paz.get('nome','')} {paz.get('cognome','')}".strip()
+                except:
+                    doc["nome_paziente"] = pid
     return templates.TemplateResponse("documenti.html", {
         "request": request, "user": user,
         "docs": docs, "categoria_attiva": categoria,
