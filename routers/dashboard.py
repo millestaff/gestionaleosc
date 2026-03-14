@@ -114,11 +114,14 @@ async def aggiorna_stato_dipendente(request: Request, user: dict = Depends(requi
 # ── PAZIENTI ──────────────────────────────────────────────────────────────────
 @router.get("/pazienti", response_class=HTMLResponse)
 async def pazienti(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
-    lista = await db["pazienti"].find().sort("timestamp", -1).to_list(100)
+    lista = await db["pazienti"].find({"archiviato": {"$ne": True}}).sort("timestamp", -1).to_list(100)
+    cittadini = await db["cittadini"].find().sort("registrato_il", -1).to_list(200)
     dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
+    visite = await db["prenotazioni_visite"].find().sort("timestamp", -1).to_list(200)
     return templates.TemplateResponse("pazienti.html", {
         "request": request, "user": user,
-        "pazienti": lista, "dipendenti": dipendenti,
+        "pazienti": lista, "cittadini": cittadini,
+        "dipendenti": dipendenti, "visite": visite,
         "active_section": "pazienti",
     })
 
@@ -825,4 +828,100 @@ async def elimina_pec(request: Request, user: dict = Depends(require_permission(
     from bson import ObjectId
     form = await request.form()
     await db["pec"].delete_one({"_id": ObjectId(form.get("pec_id"))})
+    return JSONResponse({"status": "ok"})
+
+
+# ─── VISITE ──────────────────────────────────────────────────────────────────
+
+@router.post("/visite/aggiorna")
+async def visita_aggiorna(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    visita_id = form.get("visita_id")
+    azione = form.get("azione")  # accetta, rifiuta, completa, modifica_ora
+    update = {}
+    if azione == "accetta":
+        update = {"stato": "in_carico", "medico_assegnato": user["username"], "medico_id": user["discord_id"]}
+    elif azione == "rifiuta":
+        update = {"stato": "rifiutata", "motivo_rifiuto": form.get("motivo", "")}
+    elif azione == "completa":
+        update = {"stato": "completata"}
+    elif azione == "modifica_ora":
+        update = {"ora_confermata": form.get("ora"), "data_confermata": form.get("data")}
+    if update:
+        await db["prenotazioni_visite"].update_one({"_id": ObjectId(visita_id)}, {"$set": update})
+    # Notifica DM al paziente
+    try:
+        from bot.cogs import get_bot
+        visita = await db["prenotazioni_visite"].find_one({"_id": ObjectId(visita_id)})
+        if visita and visita.get("discord_id"):
+            bot = get_bot()
+            if bot:
+                dest = await bot.fetch_user(int(visita["discord_id"]))
+                msgs = {
+                    "accetta": f"✅ La tua visita **{visita.get('tipo_visita')}** è stata accettata dal Dr. {user['username']}.",
+                    "rifiuta": f"❌ La tua visita **{visita.get('tipo_visita')}** è stata rifiutata. Motivo: {form.get('motivo', '—')}",
+                    "completa": f"✅ La tua visita **{visita.get('tipo_visita')}** è stata completata.",
+                    "modifica_ora": f"📅 L'orario della tua visita **{visita.get('tipo_visita')}** è stato aggiornato: {form.get('data')} alle {form.get('ora')}.",
+                }
+                if dest and azione in msgs:
+                    await dest.send(msgs[azione])
+    except Exception as e:
+        print(f"[VISITA] Errore DM: {e}")
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/visite/aggiungi")
+async def visita_aggiungi(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from datetime import datetime
+    form = await request.form()
+    await db["prenotazioni_visite"].insert_one({
+        "discord_id": form.get("discord_id", ""),
+        "nome_paziente": form.get("nome_paziente"),
+        "numero_tessera": form.get("numero_tessera", ""),
+        "tipo_visita": form.get("tipo_visita"),
+        "data_richiesta": form.get("data_richiesta"),
+        "ora_preferita": form.get("ora_preferita", ""),
+        "note": form.get("note", ""),
+        "stato": "in_carico",
+        "medico_assegnato": user["username"],
+        "medico_id": user["discord_id"],
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+    })
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/visite/referto")
+async def visita_referto(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from bson import ObjectId
+    from datetime import datetime
+    form = await request.form()
+    visita_id = form.get("visita_id")
+    paziente_id = form.get("paziente_id")
+    await db["prenotazioni_visite"].update_one(
+        {"_id": ObjectId(visita_id)},
+        {"$set": {"stato": "completata", "referto_id": visita_id}}
+    )
+    await db["documenti"].insert_one({
+        "paziente_id": paziente_id,
+        "titolo": f"Referto visita — {form.get('tipo_visita', '')}",
+        "categoria": "referto",
+        "contenuto": form.get("contenuto"),
+        "medico": user["username"],
+        "medico_id": user["discord_id"],
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "visibile_paziente": True,
+    })
+    return JSONResponse({"status": "ok"})
+
+
+@router.post("/pazienti/archivia")
+async def archivia_paziente(request: Request, user: dict = Depends(require_permission(100)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    paziente_id = form.get("paziente_id")
+    await db["pazienti"].update_one(
+        {"_id": ObjectId(paziente_id)},
+        {"$set": {"archiviato": True, "stato": "Deceduto", "discord_id": None}}
+    )
     return JSONResponse({"status": "ok"})

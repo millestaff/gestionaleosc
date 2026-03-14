@@ -1,181 +1,361 @@
 {% extends "base.html" %}
-{% block title %}Pazienti — Ospedale San Camillo{% endblock %}
-{% block page_title %}Pazienti{% endblock %}
-{% block breadcrumb %}Home / Operativo / Pazienti{% endblock %}
+{% block title %}Pazienti — Gestionale{% endblock %}
+{% block page_title %}Pazienti & Cittadini{% endblock %}
+{% block breadcrumb %}Home / Pazienti{% endblock %}
 
 {% block content %}
-{% if not user.readonly %}
-<div class="card">
-  <div class="card-title">🛏️ Registra Nuovo Paziente</div>
-  <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-    <div class="form-group">
-      <label class="form-label">Nome</label>
-      <input name="nome" class="form-input" placeholder="Nome...">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Cognome</label>
-      <input name="cognome" class="form-input" placeholder="Cognome...">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Età</label>
-      <input name="eta" class="form-input" type="number" placeholder="es. 35">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Diagnosi</label>
-      <input name="diagnosi" class="form-input" placeholder="Diagnosi principale...">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Medico Referente</label>
-      <select name="medico_ref" class="form-select">
-        <option value="">-- Seleziona --</option>
-        {% for d in dipendenti %}
-        <option value="{{ d.nome }} {{ d.cognome }}">{{ d.nome }} {{ d.cognome }} — {{ d.ruolo }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Stato</label>
-      <select name="status" class="form-select">
-        <option value="ricoverato">🛏️ Ricoverato</option>
-        <option value="in osservazione">🔍 In Osservazione</option>
-        <option value="dimesso">✅ Dimesso</option>
-        <option value="critico">🚨 Critico</option>
-        <option value="deceduto">⬛ Deceduto</option>
-      </select>
-    </div>
-    <div class="form-group" style="grid-column:1/-1;">
-      <label class="form-label">Note Cliniche</label>
-      <textarea name="note" class="form-textarea" rows="2" placeholder="Note aggiuntive..."></textarea>
-    </div>
-    <div style="grid-column:1/-1;">
-      <button type="button" onclick="addPaziente()" class="btn btn-primary">🛏️ Registra Paziente</button>
-    </div>
-  </form>
-</div>
-{% endif %}
 
-<div class="card">
-  <div class="card-title">📋 Lista Pazienti</div>
-  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-    <button onclick="filtra('tutti')"           class="btn btn-ghost btn-sm">Tutti</button>
-    <button onclick="filtra('ricoverato')"      class="btn btn-ghost btn-sm">🛏️ Ricoverati</button>
-    <button onclick="filtra('in osservazione')" class="btn btn-ghost btn-sm">🔍 Osservazione</button>
-    <button onclick="filtra('critico')"         class="btn btn-ghost btn-sm">🚨 Critici</button>
-    <button onclick="filtra('dimesso')"         class="btn btn-ghost btn-sm">✅ Dimessi</button>
-    <button onclick="filtra('deceduto')"        class="btn btn-ghost btn-sm">⬛ Deceduti</button>
-  </div>
-  {% if pazienti %}
-  <table id="tabella">
-    <thead>
-      <tr>
-        <th>Paziente</th>
-        <th>Età</th>
-        <th>Diagnosi</th>
-        <th>Medico Ref.</th>
-        <th>Stato</th>
-        <th>Registrato</th>
-        <th>Azioni</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in pazienti %}
-      <tr class="paz-row" data-status="{{ p.status }}">
-        <td><strong style="color:var(--text-primary)">{{ p.nome }} {{ p.cognome }}</strong></td>
-        <td>{{ p.eta }} anni</td>
-        <td>{{ p.diagnosi }}</td>
-        <td>{{ p.medico_ref or '—' }}</td>
-        <td>
-          {% if p.status == 'ricoverato' %}
-            <span class="pill pill-blue">🛏️ Ricoverato</span>
-          {% elif p.status == 'in osservazione' %}
-            <span class="pill pill-yellow">🔍 Osservazione</span>
-          {% elif p.status == 'critico' %}
-            <span class="pill pill-red">🚨 Critico</span>
-          {% elif p.status == 'dimesso' %}
-            <span class="pill pill-green">✅ Dimesso</span>
-          {% else %}
-            <span class="pill pill-gray">⬛ Deceduto</span>
-          {% endif %}
-        </td>
-        <td style="font-size:11px;color:var(--text-muted);">{{ p.timestamp }}<br>{{ p.registered_by }}</td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            {% if user.permission >= 50 and not user.readonly %}
-            <button onclick="apriStatus('{{ p._id }}','{{ p.status }}')" class="btn btn-ghost btn-sm">⚙️</button>
-            {% endif %}
-            {% if user.permission >= 100 and not user.readonly %}
-            <button onclick="eliminaPaziente('{{ p._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
-    Nessun paziente registrato.
-  </p>
+<!-- TABS PRINCIPALI -->
+<div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+  <button onclick="showMain('visite')" id="mtab-visite" class="mtab active">📅 Visite ({{ visite|length }})</button>
+  <button onclick="showMain('pazienti')" id="mtab-pazienti" class="mtab">🛏️ Pazienti ({{ pazienti|length }})</button>
+  <button onclick="showMain('cittadini')" id="mtab-cittadini" class="mtab">👥 Cittadini ({{ cittadini|length }})</button>
+  {% if not user.readonly %}
+  <button onclick="showMain('aggiungi')" id="mtab-aggiungi" class="mtab">➕ Aggiungi</button>
   {% endif %}
 </div>
 
-<!-- Modale Status -->
-<div id="modaleStatus" class="modale-overlay">
-  <div class="modale">
-    <div class="modale-title">⚙️ Aggiorna Stato Paziente</div>
-    <input type="hidden" id="paz-id">
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Nuovo Stato</label>
-      <select id="paz-status" class="form-select">
-        <option value="ricoverato">🛏️ Ricoverato</option>
-        <option value="in osservazione">🔍 In Osservazione</option>
-        <option value="critico">🚨 Critico</option>
-        <option value="dimesso">✅ Dimesso</option>
-        <option value="deceduto">⬛ Deceduto</option>
-      </select>
+<!-- ═══ TAB VISITE ═══ -->
+<div id="main-visite">
+  {% if not user.readonly %}
+  <div class="card">
+    <div class="card-title">➕ Aggiungi Visita Manuale</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome Paziente *</label>
+        <input id="v_nome" class="form-input" placeholder="Nome e cognome">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo Visita *</label>
+        <input id="v_tipo" class="form-input" placeholder="Es. Cardiologia">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input id="v_data" type="date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ora</label>
+        <input id="v_ora" type="time" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">N° Tessera</label>
+        <input id="v_tessera" class="form-input" placeholder="OSC-2026-...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note</label>
+        <input id="v_note" class="form-input" placeholder="Note aggiuntive">
+      </div>
     </div>
-    <div class="modale-footer">
-      <button onclick="salvaStatus()" class="btn btn-primary">Salva</button>
-      <button onclick="chiudi()" class="btn btn-ghost">Annulla</button>
+    <button onclick="aggiungiVisita()" class="btn btn-primary" style="margin-top:12px;">➕ Aggiungi Visita</button>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-title">📅 Gestione Visite</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button onclick="filtraVisita('tutti')" class="btn btn-ghost btn-sm">Tutte</button>
+      <button onclick="filtraVisita('in_attesa')" class="btn btn-ghost btn-sm">⏳ In Attesa</button>
+      <button onclick="filtraVisita('in_carico')" class="btn btn-ghost btn-sm">👨‍⚕️ In Carico</button>
+      <button onclick="filtraVisita('completata')" class="btn btn-ghost btn-sm">✅ Completate</button>
+      <button onclick="filtraVisita('rifiutata')" class="btn btn-ghost btn-sm">❌ Rifiutate</button>
     </div>
+    {% if visite %}
+    <div style="display:grid;gap:10px;">
+      {% for v in visite %}
+      <div class="visita-card" data-stato="{{ v.stato }}" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-weight:700;font-size:15px;">{{ v.nome_paziente }} — <span style="color:var(--primary);">{{ v.tipo_visita }}</span></div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+              📅 {{ v.data_richiesta }}{% if v.ora_confermata %} alle {{ v.ora_confermata }}{% elif v.ora_preferita %} (pref. {{ v.ora_preferita }}){% endif %}
+              {% if v.numero_tessera %} — Tessera: <strong style="color:#dc2626;">{{ v.numero_tessera }}</strong>{% endif %}
+            </div>
+            {% if v.note %}<div style="font-size:12px;color:var(--text-muted);">📝 {{ v.note }}</div>{% endif %}
+            {% if v.medico_assegnato %}<div style="font-size:12px;color:var(--text-muted);">👨‍⚕️ {{ v.medico_assegnato }}</div>{% endif %}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            {% if v.stato == 'in_attesa' %}<span class="pill pill-yellow">⏳ In Attesa</span>
+            {% elif v.stato == 'in_carico' %}<span class="pill pill-blue">👨‍⚕️ In Carico</span>
+            {% elif v.stato == 'completata' %}<span class="pill pill-green">✅ Completata</span>
+            {% elif v.stato == 'rifiutata' %}<span class="pill pill-red">❌ Rifiutata</span>
+            {% else %}<span class="pill pill-gray">{{ v.stato }}</span>{% endif %}
+          </div>
+        </div>
+        {% if not user.readonly and v.stato not in ['completata','rifiutata'] %}
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          {% if v.stato == 'in_attesa' %}
+          <button onclick="aggiornaVisita('{{ v._id }}','accetta')" class="btn btn-success btn-sm">✅ Accetta</button>
+          <button onclick="mostraRifiuta('{{ v._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">❌ Rifiuta</button>
+          {% endif %}
+          {% if v.stato == 'in_carico' %}
+          <button onclick="mostraModOra('{{ v._id }}')" class="btn btn-ghost btn-sm">📅 Modifica Orario</button>
+          <button onclick="mostraReferto('{{ v._id }}','{{ v.tipo_visita }}','{{ v.discord_id }}')" class="btn btn-primary btn-sm">📋 Completa + Referto</button>
+          {% endif %}
+        </div>
+        <!-- Form rifiuta -->
+        <div id="rifiuta-{{ v._id }}" style="display:none;margin-top:10px;">
+          <input id="motivo-{{ v._id }}" class="form-input" placeholder="Motivo rifiuto..." style="margin-bottom:6px;">
+          <button onclick="aggiornaVisita('{{ v._id }}','rifiuta',document.getElementById('motivo-{{ v._id }}').value)" class="btn btn-ghost btn-sm" style="color:var(--danger);">Conferma Rifiuto</button>
+        </div>
+        <!-- Form modifica ora -->
+        <div id="modora-{{ v._id }}" style="display:none;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="data-{{ v._id }}" type="date" class="form-input" style="max-width:150px;">
+          <input id="ora-{{ v._id }}" type="time" class="form-input" style="max-width:130px;">
+          <button onclick="modificaOra('{{ v._id }}')" class="btn btn-primary btn-sm">💾 Salva</button>
+        </div>
+        <!-- Form referto -->
+        <div id="referto-{{ v._id }}" style="display:none;margin-top:10px;">
+          <textarea id="contenuto-{{ v._id }}" class="form-textarea" rows="3" placeholder="Scrivi il referto..."></textarea>
+          <button onclick="completaReferto('{{ v._id }}','{{ v.discord_id }}')" class="btn btn-primary btn-sm" style="margin-top:6px;">💾 Salva Referto e Completa</button>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessuna visita.</p>
+    {% endif %}
   </div>
 </div>
 
+<!-- ═══ TAB PAZIENTI ═══ -->
+<div id="main-pazienti" style="display:none;">
+  <div class="card">
+    <div class="card-title">🛏️ Lista Pazienti Ospedalieri</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button onclick="filtraPaz('tutti')" class="btn btn-ghost btn-sm">Tutti</button>
+      <button onclick="filtraPaz('ricoverato')" class="btn btn-ghost btn-sm">🛏️ Ricoverati</button>
+      <button onclick="filtraPaz('osservazione')" class="btn btn-ghost btn-sm">🔍 Osservazione</button>
+      <button onclick="filtraPaz('critico')" class="btn btn-ghost btn-sm">🚨 Critici</button>
+      <button onclick="filtraPaz('dimesso')" class="btn btn-ghost btn-sm">✅ Dimessi</button>
+    </div>
+    {% if pazienti %}
+    <table>
+      <thead>
+        <tr>
+          <th>Paziente</th>
+          <th>Diagnosi</th>
+          <th>Medico Ref.</th>
+          <th>Stato</th>
+          <th>Registrato</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pazienti %}
+        <tr class="paz-row" data-stato="{{ p.status|lower }}">
+          <td>
+            <strong>{{ p.nome }} {{ p.cognome }}</strong>
+            {% if p.eta %}<div style="font-size:11px;color:var(--text-muted);">{{ p.eta }} anni</div>{% endif %}
+          </td>
+          <td style="font-size:13px;">{{ p.diagnosi or '—' }}</td>
+          <td style="font-size:13px;">{{ p.medico_ref or '—' }}</td>
+          <td>
+            {% if p.status == 'ricoverato' %}<span class="pill pill-blue">🛏️ Ricoverato</span>
+            {% elif p.status == 'osservazione' %}<span class="pill pill-yellow">🔍 Osservazione</span>
+            {% elif p.status == 'critico' %}<span class="pill pill-red">🚨 Critico</span>
+            {% elif p.status == 'dimesso' %}<span class="pill pill-green">✅ Dimesso</span>
+            {% else %}<span class="pill pill-gray">{{ p.status }}</span>{% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="/dashboard/pazienti/scheda/{{ p._id }}" class="btn btn-ghost btn-sm">📋 Scheda</a>
+            {% if user.permission >= 100 and not user.readonly %}
+            <button onclick="archiviaDeceduto('{{ p._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">☠️ Deceduto</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun paziente.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══ TAB CITTADINI ═══ -->
+<div id="main-cittadini" style="display:none;">
+  <div class="card">
+    <div class="card-title">👥 Cittadini Registrati ({{ cittadini|length }})</div>
+    <input id="search-cit" class="form-input" placeholder="🔍 Cerca..." style="max-width:280px;margin-bottom:16px;" oninput="filtraCit()">
+    {% if cittadini %}
+    <table id="tab-cittadini">
+      <thead>
+        <tr>
+          <th>Utente</th>
+          <th>Tessera</th>
+          <th>Registrato il</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in cittadini %}
+        <tr class="cit-row" data-search="{{ c.username|lower }} {{ c.tessera.numero|lower if c.tessera else '' }}">
+          <td><strong>{{ c.username }}</strong><div style="font-size:11px;color:var(--text-muted);">{{ c.discord_id }}</div></td>
+          <td>{% if c.tessera %}<span style="color:#dc2626;font-weight:700;">{{ c.tessera.numero }}</span>{% else %}—{% endif %}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ c.registrato_il }}</td>
+          <td style="display:flex;gap:6px;">
+            {% if c.tessera %}
+            <a href="/dashboard/pazienti/cerca?tessera={{ c.tessera.numero }}" class="btn btn-ghost btn-sm">📋 Scheda</a>
+            {% endif %}
+            {% if user.permission >= 100 and not user.readonly %}
+            <button onclick="eliminaCittadino('{{ c.discord_id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);">🗑️</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun cittadino.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══ TAB AGGIUNGI ═══ -->
+<div id="main-aggiungi" style="display:none;">
+  <div class="card">
+    <div class="card-title">🛏️ Registra Nuovo Paziente Ospedaliero</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+      <div class="form-group"><label class="form-label">Nome *</label><input id="p_nome" class="form-input" placeholder="Nome..."></div>
+      <div class="form-group"><label class="form-label">Cognome *</label><input id="p_cognome" class="form-input" placeholder="Cognome..."></div>
+      <div class="form-group"><label class="form-label">Età</label><input id="p_eta" type="number" class="form-input" placeholder="es. 35"></div>
+      <div class="form-group"><label class="form-label">Diagnosi</label><input id="p_diagnosi" class="form-input" placeholder="Diagnosi principale..."></div>
+      <div class="form-group"><label class="form-label">Medico Referente</label>
+        <select id="p_medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Stato</label>
+        <select id="p_stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+          <option value="dimesso">✅ Dimesso</option>
+        </select>
+      </div>
+      <div class="form-group form-full"><label class="form-label">Note Cliniche</label><textarea id="p_note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea></div>
+    </div>
+    <button onclick="addPaziente()" class="btn btn-primary" style="margin-top:12px;">🛏️ Registra Paziente</button>
+  </div>
+</div>
+
+<style>
+.mtab { background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);padding:10px 16px;cursor:pointer;font-size:14px;font-weight:500;margin-bottom:-1px; }
+.mtab:hover { color:var(--text); }
+.mtab.active { color:var(--primary);border-bottom-color:var(--primary); }
+</style>
+
 <script>
-function filtra(stato) {
-  document.querySelectorAll('.paz-row').forEach(r => {
-    r.style.display = (stato === 'tutti' || r.dataset.status === stato) ? '' : 'none';
+function showMain(name) {
+  ['visite','pazienti','cittadini','aggiungi'].forEach(t => {
+    const el = document.getElementById('main-' + t);
+    const tab = document.getElementById('mtab-' + t);
+    if (el) el.style.display = t === name ? '' : 'none';
+    if (tab) tab.classList.toggle('active', t === name);
   });
 }
-function apriStatus(id, status) {
-  document.getElementById('paz-id').value = id;
-  document.getElementById('paz-status').value = status;
-  document.getElementById('modaleStatus').classList.add('aperto');
+function filtraVisita(stato) {
+  document.querySelectorAll('.visita-card').forEach(r => {
+    r.style.display = (stato === 'tutti' || r.dataset.stato === stato) ? '' : 'none';
+  });
 }
-function chiudi() { document.getElementById('modaleStatus').classList.remove('aperto'); }
-async function addPaziente() {
-  const fd = new FormData(document.getElementById('addForm'));
-  const r = await fetch('/dashboard/pazienti/add', { method:'POST', body:fd });
-  const j = await r.json();
-  if (j.status === 'ok') { alert(j.message); location.reload(); }
-  else { alert('Errore: ' + j.detail); }
+function filtraPaz(stato) {
+  document.querySelectorAll('.paz-row').forEach(r => {
+    r.style.display = (stato === 'tutti' || r.dataset.stato === stato) ? '' : 'none';
+  });
 }
-async function salvaStatus() {
+function filtraCit() {
+  const q = document.getElementById('search-cit').value.toLowerCase();
+  document.querySelectorAll('.cit-row').forEach(r => {
+    r.style.display = r.dataset.search.includes(q) ? '' : 'none';
+  });
+}
+function mostraRifiuta(id) {
+  const el = document.getElementById('rifiuta-' + id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+function mostraModOra(id) {
+  const el = document.getElementById('modora-' + id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+function mostraReferto(id, tipo, discord_id) {
+  const el = document.getElementById('referto-' + id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+async function aggiornaVisita(id, azione, motivo='') {
   const fd = new FormData();
-  fd.append('paziente_id', document.getElementById('paz-id').value);
-  fd.append('status', document.getElementById('paz-status').value);
-  const r = await fetch('/dashboard/pazienti/aggiorna-status', { method:'POST', body:fd });
+  fd.append('visita_id', id);
+  fd.append('azione', azione);
+  if (motivo) fd.append('motivo', motivo);
+  const r = await fetch('/dashboard/visite/aggiorna', {method:'POST', body:fd});
   const j = await r.json();
-  if (j.status === 'ok') { location.reload(); }
+  if (j.status === 'ok') location.reload();
 }
-async function eliminaPaziente(id) {
-  if (!confirm('Confermi eliminazione definitiva del paziente?')) return;
+async function modificaOra(id) {
+  const fd = new FormData();
+  fd.append('visita_id', id);
+  fd.append('azione', 'modifica_ora');
+  fd.append('data', document.getElementById('data-' + id).value);
+  fd.append('ora', document.getElementById('ora-' + id).value);
+  const r = await fetch('/dashboard/visite/aggiorna', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+async function completaReferto(visita_id, discord_id) {
+  const contenuto = document.getElementById('contenuto-' + visita_id).value.trim();
+  if (!contenuto) { alert('Scrivi il referto prima di salvare.'); return; }
+  // Cerca paziente_id dal discord_id
+  const fd = new FormData();
+  fd.append('visita_id', visita_id);
+  fd.append('paziente_id', discord_id);
+  fd.append('contenuto', contenuto);
+  const r = await fetch('/dashboard/visite/referto', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+async function aggiungiVisita() {
+  const fd = new FormData();
+  fd.append('nome_paziente', document.getElementById('v_nome').value);
+  fd.append('tipo_visita', document.getElementById('v_tipo').value);
+  fd.append('data_richiesta', document.getElementById('v_data').value);
+  fd.append('ora_preferita', document.getElementById('v_ora').value);
+  fd.append('numero_tessera', document.getElementById('v_tessera').value);
+  fd.append('note', document.getElementById('v_note').value);
+  const r = await fetch('/dashboard/visite/aggiungi', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+async function addPaziente() {
+  const fd = new FormData();
+  fd.append('nome', document.getElementById('p_nome').value);
+  fd.append('cognome', document.getElementById('p_cognome').value);
+  fd.append('eta', document.getElementById('p_eta').value);
+  fd.append('diagnosi', document.getElementById('p_diagnosi').value);
+  fd.append('medico_ref', document.getElementById('p_medico').value);
+  fd.append('status', document.getElementById('p_stato').value);
+  fd.append('note', document.getElementById('p_note').value);
+  const r = await fetch('/dashboard/pazienti/add', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+async function archiviaDeceduto(id) {
+  if (!confirm('Archiviare questo paziente come deceduto? Verrà disconnesso dall\'account Discord.')) return;
   const fd = new FormData();
   fd.append('paziente_id', id);
-  const r = await fetch('/dashboard/pazienti/elimina', {method:'POST', body:fd});
+  const r = await fetch('/dashboard/pazienti/archivia', {method:'POST', body:fd});
   const j = await r.json();
-  if (j.status === 'ok') { location.reload(); }
-  else { alert('Errore: ' + (j.detail || j.message)); }
+  if (j.status === 'ok') location.reload();
+}
+async function eliminaCittadino(discord_id) {
+  if (!confirm('Eliminare questo cittadino?')) return;
+  const fd = new FormData();
+  fd.append('discord_id', discord_id);
+  const r = await fetch('/dashboard/cittadini/elimina', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
 }
 </script>
 {% endblock %}
