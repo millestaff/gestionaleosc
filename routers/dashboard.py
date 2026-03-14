@@ -157,6 +157,8 @@ async def add_paziente(request: Request, user: dict = Depends(get_current_user),
         "medico_ref":     form.get("medico_ref"),
         "status":         form.get("status", "ricoverato"),
         "note":           form.get("note", ""),
+        "discord_id":     form.get("discord_id", ""),
+        "numero_tessera": form.get("numero_tessera", ""),
         "registered_by":  user["username"],
         "timestamp":      datetime.now().strftime("%d/%m/%Y %H:%M"),
     })
@@ -1008,3 +1010,18 @@ async def toggle_reparto(request: Request, user: dict = Depends(require_permissi
         upsert=True
     )
     return JSONResponse({"status": "ok"})
+
+
+@router.get("/cittadini/cerca")
+async def cerca_cittadini(request: Request, q: str = "", user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    cittadini = await db["cittadini"].find().to_list(200)
+    q = q.lower()
+    risultati = []
+    for c in cittadini:
+        if q in c.get("username", "").lower():
+            risultati.append({
+                "discord_id": c["discord_id"],
+                "username": c["username"],
+                "tessera": c.get("tessera", {}).get("numero", "") if c.get("tessera") else "",
+            })
+    return JSONResponse(risultati[:10])

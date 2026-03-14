@@ -215,6 +215,18 @@
 
 <!-- ═══ TAB AGGIUNGI ═══ -->
 <div id="main-aggiungi" style="display:none;">
+  <!-- RICERCA CITTADINO -->
+  <div class="card">
+    <div class="card-title">🔍 Ricerca Cittadino per Ricovero</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="form-group" style="flex:1;min-width:200px;">
+        <label class="form-label">Nome o Cognome</label>
+        <input id="cerca_cit" class="form-input" placeholder="Es. Mario Rossi..." oninput="cercaCittadino()">
+      </div>
+    </div>
+    <div id="risultati-cerca" style="margin-top:12px;display:grid;gap:8px;"></div>
+  </div>
+
   <div class="card">
     <div class="card-title">🛏️ Registra Nuovo Paziente Ospedaliero</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
@@ -360,6 +372,37 @@ async function archiviaDeceduto(id) {
   const fd = new FormData();
   fd.append('paziente_id', id);
   const r = await fetch('/dashboard/pazienti/archivia', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+async function cercaCittadino() {
+  const q = document.getElementById('cerca_cit').value.trim().toLowerCase();
+  const risultati = document.getElementById('risultati-cerca');
+  if (q.length < 2) { risultati.innerHTML = ''; return; }
+  const r = await fetch('/dashboard/cittadini/cerca?q=' + encodeURIComponent(q));
+  const j = await r.json();
+  if (!j.length) { risultati.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Nessun cittadino trovato.</p>'; return; }
+  risultati.innerHTML = j.map(c => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div>
+        <strong>${c.username}</strong>
+        ${c.tessera ? '<span style="color:#dc2626;font-size:12px;margin-left:8px;">' + c.tessera + '</span>' : ''}
+        <div style="font-size:11px;color:var(--text-muted);">ID: ${c.discord_id}</div>
+      </div>
+      <button onclick="ricovera('${c.discord_id}','${c.username}','${c.tessera||''}')" class="btn btn-primary btn-sm">🛏️ Ricovera</button>
+    </div>
+  `).join('');
+}
+async function ricovera(discord_id, username, tessera) {
+  const stato = prompt('Stato ricovero:', 'ricoverato');
+  if (!stato) return;
+  const fd = new FormData();
+  fd.append('discord_id', discord_id);
+  fd.append('nome', username.split(' ')[0] || username);
+  fd.append('cognome', username.split(' ').slice(1).join(' ') || '');
+  fd.append('numero_tessera', tessera);
+  fd.append('status', stato);
+  const r = await fetch('/dashboard/pazienti/add', {method:'POST', body:fd});
   const j = await r.json();
   if (j.status === 'ok') location.reload();
 }

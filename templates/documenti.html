@@ -1,293 +1,124 @@
 {% extends "base.html" %}
-{% block title %}Documenti — Ospedale San Camillo
-<!-- POPUP DOCUMENTO -->
-<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
-    <div id="modal-categoria" style="margin-bottom:8px;"></div>
-    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
-    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
-    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
-    <div style="border-top:1px solid var(--border);padding-top:16px;">
-      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
-    </div>
-    <div id="modal-link" style="margin-top:16px;"></div>
-  </div>
-</div>
-<script>
-function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
-  document.getElementById('modal-titolo').textContent = titolo;
-  document.getElementById('modal-contenuto').textContent = contenuto;
-  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
-  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
-  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
-  const link = document.getElementById('modal-link');
-  if (pazienteId) {
-    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
-  } else {
-    link.innerHTML = '';
-  }
-  const modal = document.getElementById('doc-modal');
-  modal.style.display = 'flex';
-}
-function chiudiPopup() {
-  document.getElementById('doc-modal').style.display = 'none';
-}
-document.getElementById('doc-modal').addEventListener('click', function(e) {
-  if (e.target === this) chiudiPopup();
-});
-</script>
-{% endblock %}
-{% block page_title %}Documenti
-<!-- POPUP DOCUMENTO -->
-<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
-    <div id="modal-categoria" style="margin-bottom:8px;"></div>
-    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
-    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
-    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
-    <div style="border-top:1px solid var(--border);padding-top:16px;">
-      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
-    </div>
-    <div id="modal-link" style="margin-top:16px;"></div>
-  </div>
-</div>
-<script>
-function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
-  document.getElementById('modal-titolo').textContent = titolo;
-  document.getElementById('modal-contenuto').textContent = contenuto;
-  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
-  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
-  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
-  const link = document.getElementById('modal-link');
-  if (pazienteId) {
-    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
-  } else {
-    link.innerHTML = '';
-  }
-  const modal = document.getElementById('doc-modal');
-  modal.style.display = 'flex';
-}
-function chiudiPopup() {
-  document.getElementById('doc-modal').style.display = 'none';
-}
-document.getElementById('doc-modal').addEventListener('click', function(e) {
-  if (e.target === this) chiudiPopup();
-});
-</script>
-{% endblock %}
-{% block breadcrumb %}Home / Operativo / Documenti
-<!-- POPUP DOCUMENTO -->
-<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
-    <div id="modal-categoria" style="margin-bottom:8px;"></div>
-    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
-    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
-    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
-    <div style="border-top:1px solid var(--border);padding-top:16px;">
-      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
-    </div>
-    <div id="modal-link" style="margin-top:16px;"></div>
-  </div>
-</div>
-<script>
-function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
-  document.getElementById('modal-titolo').textContent = titolo;
-  document.getElementById('modal-contenuto').textContent = contenuto;
-  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
-  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
-  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
-  const link = document.getElementById('modal-link');
-  if (pazienteId) {
-    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
-  } else {
-    link.innerHTML = '';
-  }
-  const modal = document.getElementById('doc-modal');
-  modal.style.display = 'flex';
-}
-function chiudiPopup() {
-  document.getElementById('doc-modal').style.display = 'none';
-}
-document.getElementById('doc-modal').addEventListener('click', function(e) {
-  if (e.target === this) chiudiPopup();
-});
-</script>
-{% endblock %}
+{% block title %}Documenti — Gestionale{% endblock %}
+{% block page_title %}Documenti{% endblock %}
+{% block breadcrumb %}Home / Operativo / Documenti{% endblock %}
 
 {% block content %}
+
 {% if not user.readonly %}
 <div class="card">
   <div class="card-title">📁 Aggiungi Documento</div>
-  <form id="addForm" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
     <div class="form-group">
       <label class="form-label">Titolo</label>
-      <input name="titolo" class="form-input" placeholder="Titolo documento...">
+      <input name="titolo" id="doc_titolo" class="form-input" placeholder="Titolo documento...">
     </div>
     <div class="form-group">
       <label class="form-label">Categoria</label>
-      <select name="categoria" class="form-select">
-        {% if user.permission >= 50 %}
-        <option value="verbale">📝 Verbale</option>
-        {% endif %}
-        <option value="referto">🩺 Referto Medico</option>
-        <option value="cartella_clinica">📋 Cartella Clinica</option>
-        {% if user.permission >= 50 %}
-        <option value="rapporto">📋 Rapporto Operativo</option>
-        <option value="regolamento">📜 Regolamento</option>
-        <option value="modulo">📄 Modulo</option>
-        <option value="protocollo">🔬 Protocollo</option>
-        <option value="altro">📎 Altro</option>
-        {% endif %}
+      <select name="categoria" id="doc_categoria" class="form-select">
+        {% for cat in categorie_disponibili %}
+        <option value="{{ cat }}">{{ cat|capitalize }}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="form-group">
       <label class="form-label">Riferimento (opzionale)</label>
-      <input name="riferimento" class="form-input" placeholder="es. Paziente, Dipendente...">
+      <input name="riferimento" id="doc_riferimento" class="form-input" placeholder="es. Paziente, Dipendente...">
     </div>
-    <div class="form-group" style="grid-column:1/-1;">
+    <div class="form-group form-full">
       <label class="form-label">Contenuto</label>
-      <textarea name="contenuto" class="form-textarea" rows="4" placeholder="Contenuto del documento..."></textarea>
+      <textarea name="contenuto" id="doc_contenuto" class="form-textarea" rows="4" placeholder="Contenuto del documento..."></textarea>
     </div>
-    <div style="grid-column:1/-1;">
-      <button type="button" onclick="addDoc()" class="btn btn-primary">📁 Aggiungi Documento</button>
-    </div>
-  </form>
+  </div>
+  <button type="button" onclick="addDoc()" class="btn btn-primary" style="margin-top:8px;">📁 Aggiungi Documento</button>
 </div>
 {% endif %}
 
 <div class="card">
   <div class="card-title">📚 Archivio Documenti</div>
-  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-    <a href="/dashboard/documenti?categoria=tutti"       class="btn btn-ghost btn-sm {% if categoria_attiva=='tutti' %}btn-primary{% endif %}">Tutti</a>
-    <a href="/dashboard/documenti?categoria=referto"     class="btn btn-ghost btn-sm {% if categoria_attiva=='referto' %}btn-primary{% endif %}">🩺 Referti</a>
-    <a href="/dashboard/documenti?categoria=cartella_clinica" class="btn btn-ghost btn-sm {% if categoria_attiva=='cartella_clinica' %}btn-primary{% endif %}">📋 Cartelle</a>
-    {% if user.permission >= 50 %}
-    <a href="/dashboard/documenti?categoria=verbale"     class="btn btn-ghost btn-sm {% if categoria_attiva=='verbale' %}btn-primary{% endif %}">📝 Verbali</a>
-    <a href="/dashboard/documenti?categoria=rapporto"    class="btn btn-ghost btn-sm {% if categoria_attiva=='rapporto' %}btn-primary{% endif %}">📋 Rapporti</a>
-    <a href="/dashboard/documenti?categoria=regolamento" class="btn btn-ghost btn-sm {% if categoria_attiva=='regolamento' %}btn-primary{% endif %}">📜 Regolamenti</a>
-    <a href="/dashboard/documenti?categoria=modulo"      class="btn btn-ghost btn-sm {% if categoria_attiva=='modulo' %}btn-primary{% endif %}">📄 Moduli</a>
-    <a href="/dashboard/documenti?categoria=protocollo"  class="btn btn-ghost btn-sm {% if categoria_attiva=='protocollo' %}btn-primary{% endif %}">🔬 Protocolli</a>
-    <a href="/dashboard/documenti?categoria=altro"       class="btn btn-ghost btn-sm {% if categoria_attiva=='altro' %}btn-primary{% endif %}">📎 Altro</a>
-    {% endif %}
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <button onclick="filtraDoc('tutti')" class="btn btn-ghost btn-sm">Tutti</button>
+    <button onclick="filtraDoc('referto')" class="btn btn-ghost btn-sm">🩺 Referti</button>
+    <button onclick="filtraDoc('cartella_clinica')" class="btn btn-ghost btn-sm">📁 Cartelle</button>
+    <button onclick="filtraDoc('verbale')" class="btn btn-ghost btn-sm">📋 Verbali</button>
+    <button onclick="filtraDoc('rapporto')" class="btn btn-ghost btn-sm">📊 Rapporti</button>
+    <button onclick="filtraDoc('regolamento')" class="btn btn-ghost btn-sm">📜 Regolamenti</button>
+    <button onclick="filtraDoc('modulo')" class="btn btn-ghost btn-sm">📄 Moduli</button>
+    <button onclick="filtraDoc('protocollo')" class="btn btn-ghost btn-sm">🔬 Protocolli</button>
+    <button onclick="filtraDoc('altro')" class="btn btn-ghost btn-sm">🔖 Altro</button>
   </div>
 
   {% if docs %}
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
     {% for doc in docs %}
-    <div style="background:var(--bg-primary);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s;"
-         onmouseover="this.style.borderColor='var(--accent)'"
-         onmouseout="this.style.borderColor='var(--border)'">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-        <span style="font-size:24px;">
-          {% if doc.categoria == 'verbale' %}📝
-          {% elif doc.categoria == 'referto' %}🩺
-          {% elif doc.categoria == 'cartella_clinica' %}📋
-          {% elif doc.categoria == 'rapporto' %}📋
-          {% elif doc.categoria == 'regolamento' %}📜
-          {% elif doc.categoria == 'modulo' %}📄
-          {% elif doc.categoria == 'protocollo' %}🔬
-          {% else %}📎{% endif %}
-        </span>
-        <span class="pill
-          {% if doc.categoria == 'verbale' %}pill-blue
-          {% elif doc.categoria == 'referto' %}pill-green
-          {% elif doc.categoria == 'cartella_clinica' %}pill-green
-          {% elif doc.categoria == 'rapporto' %}pill-yellow
-          {% elif doc.categoria == 'regolamento' %}pill-red
-          {% else %}pill-gray{% endif %}">
-          {{ doc.categoria | replace('_', ' ') | title }}
-        </span>
-      </div>
-      <div data-idx="{{ loop.index }}"
-        data-titolo="{{ doc.titolo|e }}"
-        data-contenuto="{{ doc.contenuto|e }}"
-        data-paziente="{{ doc.nome_paziente|default('')|e }}"
-        data-medico="{{ doc.registered_by|default(doc.medico)|default('')|e }}"
-        data-categoria="{{ doc.categoria|e }}"
-        data-paziente-id="{{ doc.paziente_id|default('')|e }}"
-        onclick="apriDocFromCard(this)" style="cursor:pointer;">
-        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">{{ doc.titolo }}</div>
-        {% if doc.riferimento %}
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">📎 Rif: {{ doc.riferimento }}</div>
-        {% endif %}
-        {% if doc.paziente_id %}
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">
-          👤 {{ doc.nome_paziente if doc.nome_paziente else doc.paziente_id }}
-          {% if doc.nome_paziente %}
-          <a href="/dashboard/pazienti/scheda/{{ doc.paziente_id }}" style="font-size:11px;color:var(--primary);margin-left:6px;">→ Scheda</a>
-          {% endif %}
-        </div>
-        {% endif %}
-        <div style="font-size:12px;color:var(--text-dim);line-height:1.5;max-height:55px;overflow:hidden;" id="doc-preview-{{ loop.index }}">{{ doc.contenuto }}</div>
-        <div id="doc-full-{{ loop.index }}" style="display:none;font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;margin-top:8px;padding:12px;background:var(--bg);border-radius:8px;">{{ doc.contenuto }}</div>
-      </div>
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;">
-        <span>👤 {{ doc.author }} — {{ doc.timestamp }}</span>
+    <div class="doc-card" data-categoria="{{ doc.categoria }}"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .15s;"
+      onclick="apriDoc(
+        {{ doc.titolo|tojson }},
+        {{ doc.contenuto|tojson }},
+        {{ (doc.nome_paziente or '')|tojson }},
+        {{ (doc.registered_by or doc.medico or '')|tojson }},
+        {{ doc.categoria|tojson }},
+        {{ (doc.paziente_id or '')|tojson }}
+      )">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <span class="pill pill-blue" style="font-size:11px;">{{ doc.categoria|capitalize }}</span>
         {% if user.permission >= 100 and not user.readonly %}
-        <button onclick="eliminaDocumento('{{ doc._id }}')" class="btn btn-ghost btn-sm" style="color:var(--danger);padding:3px 8px;">🗑️</button>
+        <button onclick="event.stopPropagation();eliminaDocumento('{{ doc._id }}')"
+          class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 6px;">🗑️</button>
         {% endif %}
+      </div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px;">{{ doc.titolo }}</div>
+      {% if doc.nome_paziente %}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">👤 {{ doc.nome_paziente }}</div>
+      {% elif doc.paziente_id %}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">👤 {{ doc.paziente_id }}</div>
+      {% endif %}
+      {% if doc.riferimento %}
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">📎 {{ doc.riferimento }}</div>
+      {% endif %}
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.5;max-height:48px;overflow:hidden;">{{ doc.contenuto }}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+        👨‍⚕️ {{ doc.registered_by or doc.medico or '—' }} — {{ doc.timestamp }}
       </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">
-    📭 Nessun documento in archivio.
-  </p>
+  <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun documento.</p>
   {% endif %}
 </div>
 
-<script>
-async function addDoc() {
-  const fd = new FormData(document.getElementById('addForm'));
-  const r = await fetch('/dashboard/documenti/add', { method:'POST', body:fd });
-  const j = await r.json();
-  if (j.status === 'ok') { alert(j.message); location.reload(); }
-  else { alert('Errore: ' + (j.detail || j.message)); }
-}
-async function eliminaDocumento(id) {
-  if (!confirm('Confermi eliminazione definitiva del documento?')) return;
-  const fd = new FormData();
-  fd.append('documento_id', id);
-  const r = await fetch('/dashboard/documenti/elimina', {method:'POST', body:fd});
-  const j = await r.json();
-  if (j.status === 'ok') { location.reload(); }
-  else { alert('Errore: ' + (j.detail || j.message)); }
-}
-</script>
-
-<!-- POPUP DOCUMENTO -->
+<!-- POPUP -->
 <div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
-    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
-    <div id="modal-categoria" style="margin-bottom:8px;"></div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:620px;width:92%;max-height:82vh;overflow-y:auto;position:relative;">
+    <button onclick="chiudiPopup()" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div id="modal-cat" style="margin-bottom:10px;"></div>
     <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
-    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
+    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:3px;"></div>
     <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
     <div style="border-top:1px solid var(--border);padding-top:16px;">
-      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
+      <div id="modal-contenuto" style="font-size:14px;line-height:1.8;white-space:pre-wrap;"></div>
     </div>
     <div id="modal-link" style="margin-top:16px;"></div>
   </div>
 </div>
+
 <script>
+function filtraDoc(cat) {
+  document.querySelectorAll('.doc-card').forEach(c => {
+    c.style.display = (cat === 'tutti' || c.dataset.categoria === cat) ? '' : 'none';
+  });
+}
 function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
   document.getElementById('modal-titolo').textContent = titolo;
   document.getElementById('modal-contenuto').textContent = contenuto;
   document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
   document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
-  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
+  document.getElementById('modal-cat').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
   const link = document.getElementById('modal-link');
-  if (pazienteId) {
-    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
-  } else {
-    link.innerHTML = '';
-  }
-  const modal = document.getElementById('doc-modal');
-  modal.style.display = 'flex';
+  link.innerHTML = pazienteId ? '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Scheda Paziente</a>' : '';
+  document.getElementById('doc-modal').style.display = 'flex';
 }
 function chiudiPopup() {
   document.getElementById('doc-modal').style.display = 'none';
@@ -295,5 +126,23 @@ function chiudiPopup() {
 document.getElementById('doc-modal').addEventListener('click', function(e) {
   if (e.target === this) chiudiPopup();
 });
+async function addDoc() {
+  const fd = new FormData();
+  fd.append('titolo', document.getElementById('doc_titolo').value);
+  fd.append('categoria', document.getElementById('doc_categoria').value);
+  fd.append('riferimento', document.getElementById('doc_riferimento').value);
+  fd.append('contenuto', document.getElementById('doc_contenuto').value);
+  const r = await fetch('/dashboard/documenti/add', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+async function eliminaDocumento(id) {
+  if (!confirm('Eliminare questo documento?')) return;
+  const fd = new FormData();
+  fd.append('doc_id', id);
+  const r = await fetch('/dashboard/documenti/delete', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
 </script>
 {% endblock %}
