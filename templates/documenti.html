@@ -1,7 +1,121 @@
 {% extends "base.html" %}
-{% block title %}Documenti — Ospedale San Camillo{% endblock %}
-{% block page_title %}Documenti{% endblock %}
-{% block breadcrumb %}Home / Operativo / Documenti{% endblock %}
+{% block title %}Documenti — Ospedale San Camillo
+<!-- POPUP DOCUMENTO -->
+<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    <div id="modal-categoria" style="margin-bottom:8px;"></div>
+    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
+    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
+    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
+    </div>
+    <div id="modal-link" style="margin-top:16px;"></div>
+  </div>
+</div>
+<script>
+function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
+  document.getElementById('modal-titolo').textContent = titolo;
+  document.getElementById('modal-contenuto').textContent = contenuto;
+  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
+  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
+  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
+  const link = document.getElementById('modal-link');
+  if (pazienteId) {
+    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
+  } else {
+    link.innerHTML = '';
+  }
+  const modal = document.getElementById('doc-modal');
+  modal.style.display = 'flex';
+}
+function chiudiPopup() {
+  document.getElementById('doc-modal').style.display = 'none';
+}
+document.getElementById('doc-modal').addEventListener('click', function(e) {
+  if (e.target === this) chiudiPopup();
+});
+</script>
+{% endblock %}
+{% block page_title %}Documenti
+<!-- POPUP DOCUMENTO -->
+<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    <div id="modal-categoria" style="margin-bottom:8px;"></div>
+    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
+    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
+    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
+    </div>
+    <div id="modal-link" style="margin-top:16px;"></div>
+  </div>
+</div>
+<script>
+function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
+  document.getElementById('modal-titolo').textContent = titolo;
+  document.getElementById('modal-contenuto').textContent = contenuto;
+  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
+  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
+  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
+  const link = document.getElementById('modal-link');
+  if (pazienteId) {
+    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
+  } else {
+    link.innerHTML = '';
+  }
+  const modal = document.getElementById('doc-modal');
+  modal.style.display = 'flex';
+}
+function chiudiPopup() {
+  document.getElementById('doc-modal').style.display = 'none';
+}
+document.getElementById('doc-modal').addEventListener('click', function(e) {
+  if (e.target === this) chiudiPopup();
+});
+</script>
+{% endblock %}
+{% block breadcrumb %}Home / Operativo / Documenti
+<!-- POPUP DOCUMENTO -->
+<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    <div id="modal-categoria" style="margin-bottom:8px;"></div>
+    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
+    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
+    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
+    </div>
+    <div id="modal-link" style="margin-top:16px;"></div>
+  </div>
+</div>
+<script>
+function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
+  document.getElementById('modal-titolo').textContent = titolo;
+  document.getElementById('modal-contenuto').textContent = contenuto;
+  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
+  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
+  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
+  const link = document.getElementById('modal-link');
+  if (pazienteId) {
+    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
+  } else {
+    link.innerHTML = '';
+  }
+  const modal = document.getElementById('doc-modal');
+  modal.style.display = 'flex';
+}
+function chiudiPopup() {
+  document.getElementById('doc-modal').style.display = 'none';
+}
+document.getElementById('doc-modal').addEventListener('click', function(e) {
+  if (e.target === this) chiudiPopup();
+});
+</script>
+{% endblock %}
 
 {% block content %}
 {% if not user.readonly %}
@@ -87,7 +201,14 @@
           {{ doc.categoria | replace('_', ' ') | title }}
         </span>
       </div>
-      <div onclick="toggleDoc('{{ loop.index }}')" style="cursor:pointer;">
+      <div data-idx="{{ loop.index }}"
+        data-titolo="{{ doc.titolo|e }}"
+        data-contenuto="{{ doc.contenuto|e }}"
+        data-paziente="{{ doc.nome_paziente|default('')|e }}"
+        data-medico="{{ doc.registered_by|default(doc.medico)|default('')|e }}"
+        data-categoria="{{ doc.categoria|e }}"
+        data-paziente-id="{{ doc.paziente_id|default('')|e }}"
+        onclick="apriDocFromCard(this)" style="cursor:pointer;">
         <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">{{ doc.titolo }}</div>
         {% if doc.riferimento %}
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">📎 Rif: {{ doc.riferimento }}</div>
@@ -136,5 +257,43 @@ async function eliminaDocumento(id) {
   if (j.status === 'ok') { location.reload(); }
   else { alert('Errore: ' + (j.detail || j.message)); }
 }
+</script>
+
+<!-- POPUP DOCUMENTO -->
+<div id="doc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="chiudiPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    <div id="modal-categoria" style="margin-bottom:8px;"></div>
+    <div id="modal-titolo" style="font-size:20px;font-weight:700;margin-bottom:8px;"></div>
+    <div id="modal-paziente" style="font-size:13px;color:var(--text-muted);margin-bottom:4px;"></div>
+    <div id="modal-medico" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div id="modal-contenuto" style="font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--text);"></div>
+    </div>
+    <div id="modal-link" style="margin-top:16px;"></div>
+  </div>
+</div>
+<script>
+function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
+  document.getElementById('modal-titolo').textContent = titolo;
+  document.getElementById('modal-contenuto').textContent = contenuto;
+  document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
+  document.getElementById('modal-medico').textContent = medico ? '👨‍⚕️ ' + medico : '';
+  document.getElementById('modal-categoria').innerHTML = '<span class="pill pill-blue">' + categoria + '</span>';
+  const link = document.getElementById('modal-link');
+  if (pazienteId) {
+    link.innerHTML = '<a href="/dashboard/pazienti/scheda/' + pazienteId + '" class="btn btn-ghost btn-sm">📋 Vai alla Scheda Paziente</a>';
+  } else {
+    link.innerHTML = '';
+  }
+  const modal = document.getElementById('doc-modal');
+  modal.style.display = 'flex';
+}
+function chiudiPopup() {
+  document.getElementById('doc-modal').style.display = 'none';
+}
+document.getElementById('doc-modal').addEventListener('click', function(e) {
+  if (e.target === this) chiudiPopup();
+});
 </script>
 {% endblock %}

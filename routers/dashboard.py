@@ -30,9 +30,30 @@ async def dashboard_home(request: Request, user: dict = Depends(get_current_user
         "richiami_personali": richiami_personali,
         "in_attesa":         await db["dipendenti"].count_documents({"approvato": False}) if user.get("permission", 0) >= 100 else 0,
     }
+    # Carica stato reparti dal DB
+    REPARTI_DEFAULT = [
+        {"nome": "Reparto Degenze", "emoji": "💉"},
+        {"nome": "Pronto Soccorso", "emoji": "🚑"},
+        {"nome": "Laboratorio Analisi", "emoji": "🔬"},
+        {"nome": "Farmacia", "emoji": "💊"},
+        {"nome": "Chirurgia", "emoji": "✂️"},
+        {"nome": "Amministrazione", "emoji": "📁"},
+    ]
+    reparti_db = await db["reparti"].find().to_list(20)
+    reparti_map = {r["nome"]: r for r in reparti_db}
+    reparti = []
+    for r in REPARTI_DEFAULT:
+        db_entry = reparti_map.get(r["nome"], {})
+        reparti.append({
+            "nome": r["nome"],
+            "emoji": r["emoji"],
+            "attivo": db_entry.get("attivo", True),
+            "aggiornato_da": db_entry.get("aggiornato_da", ""),
+        })
     return templates.TemplateResponse("dashboard.html", {
         "request": request, "user": user,
-        "stats": stats, "active_section": "dashboard",
+        "stats": stats, "reparti": reparti,
+        "active_section": "dashboard",
     })
 
 
@@ -971,4 +992,19 @@ async def aggiorna_stato_paziente(request: Request, user: dict = Depends(require
             {"_id": ObjectId(paziente_id)},
             {"$set": {"status": nuovo_stato}}
         )
+    return JSONResponse({"status": "ok"})
+
+
+# ─── REPARTI ─────────────────────────────────────────────────────────────────
+
+@router.post("/reparti/toggle")
+async def toggle_reparto(request: Request, user: dict = Depends(require_permission(50)), db=Depends(get_db)):
+    form = await request.form()
+    reparto = form.get("reparto")
+    attivo = form.get("attivo") == "true"
+    await db["reparti"].update_one(
+        {"nome": reparto},
+        {"$set": {"attivo": attivo, "aggiornato_da": user["username"]}},
+        upsert=True
+    )
     return JSONResponse({"status": "ok"})

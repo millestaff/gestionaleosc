@@ -1,7 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — Ospedale San Camillo{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
-{% block breadcrumb %}Home / Dashboard{% endblock %}
+{% block title %}Dashboard — Ospedale San Camillo<script>
+async function toggleReparto(nome, attivo) {
+  const fd = new FormData();
+  fd.append('reparto', nome);
+  fd.append('attivo', attivo);
+  const r = await fetch('/dashboard/reparti/toggle', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+</script>
+{% endblock %}
+{% block page_title %}Dashboard<script>
+async function toggleReparto(nome, attivo) {
+  const fd = new FormData();
+  fd.append('reparto', nome);
+  fd.append('attivo', attivo);
+  const r = await fetch('/dashboard/reparti/toggle', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+</script>
+{% endblock %}
+{% block breadcrumb %}Home / Dashboard<script>
+async function toggleReparto(nome, attivo) {
+  const fd = new FormData();
+  fd.append('reparto', nome);
+  fd.append('attivo', attivo);
+  const r = await fetch('/dashboard/reparti/toggle', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="stats-grid">
@@ -117,4 +147,14 @@
     </div>
   </div>
 </div>
+<script>
+async function toggleReparto(nome, attivo) {
+  const fd = new FormData();
+  fd.append('reparto', nome);
+  fd.append('attivo', attivo);
+  const r = await fetch('/dashboard/reparti/toggle', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
+</script>
 {% endblock %}
