@@ -1,7 +1,313 @@
 {% extends "base.html" %}
-{% block title %}Pazienti — Gestionale{% endblock %}
-{% block page_title %}Pazienti & Cittadini{% endblock %}
-{% block breadcrumb %}Home / Pazienti{% endblock %}
+{% block title %}Pazienti — Gestionale
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block page_title %}Pazienti & Cittadini
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block breadcrumb %}Home / Pazienti
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
 
 {% block content %}
 
@@ -393,15 +699,24 @@ async function cercaCittadino() {
     </div>
   `).join('');
 }
-async function ricovera(discord_id, username, tessera) {
-  const stato = prompt('Stato ricovero:', 'ricoverato');
-  if (!stato) return;
+function ricovera(discord_id, username, tessera) {
+  document.getElementById('ric-discord-id').value = discord_id;
+  document.getElementById('ric-username').value = username;
+  document.getElementById('ric-tessera').value = tessera;
+  document.getElementById('ric-nome').value = username.split(' ')[0] || username;
+  document.getElementById('ric-cognome').value = username.split(' ').slice(1).join(' ') || '';
+  document.getElementById('ric-modal').style.display = 'flex';
+}
+async function confermaRicovero() {
   const fd = new FormData();
-  fd.append('discord_id', discord_id);
-  fd.append('nome', username.split(' ')[0] || username);
-  fd.append('cognome', username.split(' ').slice(1).join(' ') || '');
-  fd.append('numero_tessera', tessera);
-  fd.append('status', stato);
+  fd.append('discord_id', document.getElementById('ric-discord-id').value);
+  fd.append('nome', document.getElementById('ric-nome').value);
+  fd.append('cognome', document.getElementById('ric-cognome').value);
+  fd.append('numero_tessera', document.getElementById('ric-tessera').value);
+  fd.append('status', document.getElementById('ric-stato').value);
+  fd.append('diagnosi', document.getElementById('ric-diagnosi').value);
+  fd.append('medico_ref', document.getElementById('ric-medico').value);
+  fd.append('note', document.getElementById('ric-note').value);
   const r = await fetch('/dashboard/pazienti/add', {method:'POST', body:fd});
   const j = await r.json();
   if (j.status === 'ok') location.reload();
@@ -415,4 +730,106 @@ async function eliminaCittadino(discord_id) {
   if (j.status === 'ok') location.reload();
 }
 </script>
+
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP RICOVERO -->
+<div id="ric-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('ric-modal').style.display='none'" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;">✕</button>
+    <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🛏️ Ricovera Paziente</div>
+    <input type="hidden" id="ric-discord-id">
+    <input type="hidden" id="ric-tessera">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input id="ric-nome" class="form-input" placeholder="Nome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cognome</label>
+        <input id="ric-cognome" class="form-input" placeholder="Cognome...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Utente Discord</label>
+        <input id="ric-username" class="form-input" readonly style="opacity:.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stato Ricovero *</label>
+        <select id="ric-stato" class="form-select">
+          <option value="ricoverato">🛏️ Ricoverato</option>
+          <option value="osservazione">🔍 Osservazione</option>
+          <option value="critico">🚨 Critico</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Diagnosi / Motivo ricovero</label>
+        <input id="ric-diagnosi" class="form-input" placeholder="Es. Frattura, Infarto...">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Medico Referente</label>
+        <select id="ric-medico" class="form-select">
+          <option value="">-- Seleziona --</option>
+          {% for d in dipendenti %}<option value="{{ d.username }}">{{ d.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Note Cliniche</label>
+        <textarea id="ric-note" class="form-textarea" rows="3" placeholder="Note aggiuntive..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
+      <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
