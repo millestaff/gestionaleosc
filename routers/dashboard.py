@@ -1013,7 +1013,7 @@ async def toggle_reparto(request: Request, user: dict = Depends(require_permissi
 
 
 @router.get("/cittadini/cerca")
-async def cerca_cittadini(request: Request, q: str = "", user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+async def cerca_cittadini(request: Request, q: str = "", user: dict = Depends(get_current_user), db=Depends(get_db)):
     cittadini = await db["cittadini"].find().to_list(200)
     q = q.lower()
     risultati = []
