@@ -53,14 +53,13 @@
     {% for doc in docs %}
     <div class="doc-card" data-categoria="{{ doc.categoria }}"
       style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color .15s;"
-      onclick="apriDoc(
-        {{ doc.titolo|tojson }},
-        {{ doc.contenuto|tojson }},
-        {{ (doc.nome_paziente or '')|tojson }},
-        {{ (doc.registered_by or doc.medico or '')|tojson }},
-        {{ doc.categoria|tojson }},
-        {{ (doc.paziente_id or '')|tojson }}
-      )">
+      onclick="apriDoc(this.dataset.titolo,this.dataset.contenuto,this.dataset.paziente,this.dataset.medico,this.dataset.categoria,this.dataset.id2)"
+      data-titolo="{{ doc.titolo|e }}"
+      data-contenuto="{{ doc.contenuto|e }}"
+      data-paziente="{{ doc.nome_paziente|default('')|e }}"
+      data-medico="{{ (doc.registered_by or doc.medico or '')|e }}"
+      data-categoria="{{ doc.categoria|e }}"
+      data-id2="{{ doc.paziente_id|default('')|e }}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
         <span class="pill pill-blue" style="font-size:11px;">{{ doc.categoria|capitalize }}</span>
         {% if user.permission >= 100 and not user.readonly %}
@@ -111,6 +110,10 @@ function filtraDoc(cat) {
   });
 }
 function apriDoc(titolo, contenuto, paziente, medico, categoria, pazienteId) {
+  // Decodifica entità HTML
+  const txt = document.createElement('textarea');
+  txt.innerHTML = titolo; titolo = txt.value;
+  txt.innerHTML = contenuto; contenuto = txt.value;
   document.getElementById('modal-titolo').textContent = titolo;
   document.getElementById('modal-contenuto').textContent = contenuto;
   document.getElementById('modal-paziente').textContent = paziente ? '👤 ' + paziente : '';
