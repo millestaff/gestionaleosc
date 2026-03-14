@@ -1018,10 +1018,15 @@ async def cerca_cittadini(request: Request, q: str = "", user: dict = Depends(re
     q = q.lower()
     risultati = []
     for c in cittadini:
-        if q in c.get("username", "").lower():
+        username = c.get("username", "").lower()
+        tessera = c.get("tessera", {}) or {}
+        nome_tessera = (tessera.get("nome", "") + " " + tessera.get("cognome", "")).lower()
+        numero_tessera = tessera.get("numero", "").lower()
+        if q in username or q in nome_tessera or q in numero_tessera:
             risultati.append({
                 "discord_id": c["discord_id"],
                 "username": c["username"],
-                "tessera": c.get("tessera", {}).get("numero", "") if c.get("tessera") else "",
+                "nome_completo": (tessera.get("nome", "") + " " + tessera.get("cognome", "")).strip(),
+                "tessera": tessera.get("numero", ""),
             })
     return JSONResponse(risultati[:10])

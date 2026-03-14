@@ -695,11 +695,11 @@ async function cercaCittadino() {
   risultati.innerHTML = j.map(c => `
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <div>
-        <strong>${c.username}</strong>
+        <strong>${c.nome_completo || c.username}</strong>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">(${c.username})</span>
         ${c.tessera ? '<span style="color:#dc2626;font-size:12px;margin-left:8px;">' + c.tessera + '</span>' : ''}
-        <div style="font-size:11px;color:var(--text-muted);">ID: ${c.discord_id}</div>
       </div>
-      <button onclick="ricovera('${c.discord_id}','${c.username}','${c.tessera||''}')" class="btn btn-primary btn-sm">🛏️ Ricovera</button>
+      <button onclick="ricovera('${c.discord_id}','${c.nome_completo || c.username}','${c.tessera||''}')" class="btn btn-primary btn-sm">🛏️ Ricovera</button>
     </div>
   `).join('');
 }
