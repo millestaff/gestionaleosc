@@ -87,11 +87,17 @@
           {{ doc.categoria | replace('_', ' ') | title }}
         </span>
       </div>
-      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">{{ doc.titolo }}</div>
-      {% if doc.riferimento %}
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">📎 Rif: {{ doc.riferimento }}</div>
-      {% endif %}
-      <div style="font-size:12px;color:var(--text-dim);line-height:1.5;max-height:55px;overflow:hidden;">{{ doc.contenuto }}</div>
+      <div onclick="toggleDoc('{{ loop.index }}')" style="cursor:pointer;">
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">{{ doc.titolo }}</div>
+        {% if doc.riferimento %}
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">📎 Rif: {{ doc.riferimento }}</div>
+        {% endif %}
+        {% if doc.paziente_id %}
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">👤 Paziente ID: {{ doc.paziente_id }}</div>
+        {% endif %}
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.5;max-height:55px;overflow:hidden;" id="doc-preview-{{ loop.index }}">{{ doc.contenuto }}</div>
+        <div id="doc-full-{{ loop.index }}" style="display:none;font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap;margin-top:8px;padding:12px;background:var(--bg);border-radius:8px;">{{ doc.contenuto }}</div>
+      </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;">
         <span>👤 {{ doc.author }} — {{ doc.timestamp }}</span>
         {% if user.permission >= 100 and not user.readonly %}

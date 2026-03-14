@@ -341,6 +341,20 @@ async function addPaziente() {
   const j = await r.json();
   if (j.status === 'ok') location.reload();
 }
+async function aggiornaStato(id, stato) {
+  if (!stato) return;
+  const msgs = {
+    'deceduto': 'Segnare come deceduto? Il profilo verrà archiviato e disconnesso da Discord.',
+    'dimesso': 'Segnare come dimesso? Il paziente verrà spostato tra i cittadini.',
+  };
+  if (msgs[stato] && !confirm(msgs[stato])) { location.reload(); return; }
+  const fd = new FormData();
+  fd.append('paziente_id', id);
+  fd.append('stato', stato);
+  const r = await fetch('/dashboard/pazienti/stato', {method:'POST', body:fd});
+  const j = await r.json();
+  if (j.status === 'ok') location.reload();
+}
 async function archiviaDeceduto(id) {
   if (!confirm('Archiviare questo paziente come deceduto? Verrà disconnesso dall\'account Discord.')) return;
   const fd = new FormData();

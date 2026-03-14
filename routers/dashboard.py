@@ -925,3 +925,32 @@ async def archivia_paziente(request: Request, user: dict = Depends(require_permi
         {"$set": {"archiviato": True, "stato": "Deceduto", "discord_id": None}}
     )
     return JSONResponse({"status": "ok"})
+
+
+@router.post("/pazienti/stato")
+async def aggiorna_stato_paziente(request: Request, user: dict = Depends(require_permission(10)), db=Depends(get_db)):
+    from bson import ObjectId
+    form = await request.form()
+    paziente_id = form.get("paziente_id")
+    nuovo_stato = form.get("stato")
+    paziente = await db["pazienti"].find_one({"_id": ObjectId(paziente_id)})
+    if not paziente:
+        return JSONResponse({"status": "error", "detail": "Paziente non trovato"})
+    if nuovo_stato == "deceduto":
+        # Archivia e scollega discord
+        await db["pazienti"].update_one(
+            {"_id": ObjectId(paziente_id)},
+            {"$set": {"stato": "Deceduto", "archiviato": True, "discord_id": None, "status": "deceduto"}}
+        )
+    elif nuovo_stato == "dimesso":
+        # Sposta da pazienti a cittadini se ha discord_id
+        await db["pazienti"].update_one(
+            {"_id": ObjectId(paziente_id)},
+            {"$set": {"status": "dimesso", "archiviato": True}}
+        )
+    else:
+        await db["pazienti"].update_one(
+            {"_id": ObjectId(paziente_id)},
+            {"$set": {"status": nuovo_stato}}
+        )
+    return JSONResponse({"status": "ok"})
