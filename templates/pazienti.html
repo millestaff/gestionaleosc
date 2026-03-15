@@ -109,7 +109,7 @@
     {% if deceduti %}
     <table>
       <thead>
-        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th><th>Azioni</th></tr>
       </thead>
       <tbody>
         {% for p in deceduti %}
@@ -118,6 +118,7 @@
           <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
           <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
           <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+          <td><a href="/dashboard/pazienti/scheda/{{ p._id }}" class="btn btn-ghost btn-sm">📋 Scheda</a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -238,7 +239,7 @@
     {% if deceduti %}
     <table>
       <thead>
-        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th><th>Azioni</th></tr>
       </thead>
       <tbody>
         {% for p in deceduti %}
@@ -247,6 +248,7 @@
           <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
           <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
           <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+          <td><a href="/dashboard/pazienti/scheda/{{ p._id }}" class="btn btn-ghost btn-sm">📋 Scheda</a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -367,7 +369,7 @@
     {% if deceduti %}
     <table>
       <thead>
-        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th><th>Azioni</th></tr>
       </thead>
       <tbody>
         {% for p in deceduti %}
@@ -376,6 +378,7 @@
           <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
           <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
           <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+          <td><a href="/dashboard/pazienti/scheda/{{ p._id }}" class="btn btn-ghost btn-sm">📋 Scheda</a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -923,7 +926,7 @@ async function eliminaCittadino(discord_id) {
     {% if deceduti %}
     <table>
       <thead>
-        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th><th>Azioni</th></tr>
       </thead>
       <tbody>
         {% for p in deceduti %}
@@ -932,6 +935,7 @@ async function eliminaCittadino(discord_id) {
           <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
           <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
           <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+          <td><a href="/dashboard/pazienti/scheda/{{ p._id }}" class="btn btn-ghost btn-sm">📋 Scheda</a></td>
         </tr>
         {% endfor %}
       </tbody>
