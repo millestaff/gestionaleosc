@@ -617,7 +617,7 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
         from bot.cogs import get_bot
         bot = get_bot()
         guild = bot.get_guild(int(DISCORD_GUILD_ID)) if bot else None
-        if guild and ruolo_id:
+        if guild and ruolo_ids:
             try:
                 member = guild.get_member(int(discord_id)) or await guild.fetch_member(int(discord_id))
             except Exception:
@@ -626,13 +626,14 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
             roles = [r for r in roles if r]
             if member and roles:
                 await member.add_roles(*roles)
+                nomi_ruoli = ", ".join([r.name for r in roles])
                 embed = nextcord.Embed(
                     title="🏥 Candidatura Approvata!",
                     description=f"Congratulazioni! La tua candidatura è stata approvata da **{user['username']}**.",
                     color=0x22c55e,
                     timestamp=datetime.utcnow(),
                 )
-                embed.add_field(name="👔 Ruolo Assegnato", value=role.name, inline=True)
+                embed.add_field(name="👔 Ruoli Assegnati", value=nomi_ruoli, inline=True)
                 embed.add_field(name="🔗 Accesso", value="Puoi ora accedere al gestionale staff.", inline=False)
                 embed.set_footer(text="Benvenuto nel team!")
                 try:
@@ -648,9 +649,24 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
                             timestamp=datetime.utcnow(),
                         )
                         embed_pub.add_field(name="👤 Nuovo Membro", value=member.mention, inline=True)
-                        embed_pub.add_field(name="🏷️ Ruolo", value=role.name, inline=True)
+                        embed_pub.add_field(name="🏷️ Ruoli", value=nomi_ruoli, inline=True)
                         embed_pub.add_field(name="✅ Approvato da", value=user["username"], inline=True)
                         await canale.send(embed=embed_pub)
+            # Aggiungi automaticamente come dipendente approvato
+            await db["dipendenti"].update_one(
+                {"discord_id": discord_id},
+                {"$set": {
+                    "discord_id": discord_id,
+                    "username": candidatura.get("username", ""),
+                    "nome": candidatura.get("nome", ""),
+                    "cognome": candidatura.get("cognome", ""),
+                    "ruolo": "Medico Tirocinante",
+                    "approvato": True,
+                    "permission": 10,
+                    "registrato_il": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                }},
+                upsert=True
+            )
     except Exception as e:
         print(f"[CANDIDATURA] Errore: {e}")
 
