@@ -617,7 +617,7 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
         from bot.cogs import get_bot
         bot = get_bot()
         guild = bot.get_guild(int(DISCORD_GUILD_ID)) if bot else None
-        if guild and ruolo_id:
+        if guild and ruolo_ids:
             try:
                 member = guild.get_member(int(discord_id)) or await guild.fetch_member(int(discord_id))
             except Exception:
