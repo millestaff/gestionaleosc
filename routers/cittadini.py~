@@ -467,6 +467,12 @@ async def candidatura_invia(request: Request):
         "approvata_il": None,
     })
 
+    # Notifica al Direttore via bot
+    try:
+        await _notifica_candidatura(discord_id, user["username"], form.get("nome", ""), form.get("cognome", ""))
+    except Exception:
+        pass
+
     return JSONResponse({"status": "ok", "message": "Candidatura inviata! Sarai contattato presto."})
 
 
