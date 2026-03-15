@@ -650,7 +650,7 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
                             timestamp=datetime.utcnow(),
                         )
                         embed_pub.add_field(name="👤 Nuovo Membro", value=member.mention, inline=True)
-                        embed_pub.add_field(name="🏷️ Ruoli", value=nomi_ruoli, inline=True)
+                        #embed_pub.add_field(name="🏷️ Ruoli", value=nomi_ruoli, inline=True)
                         embed_pub.add_field(name="✅ Approvato da", value=user["username"], inline=True)
                         await canale.send(embed=embed_pub)
             # Aggiungi automaticamente come dipendente approvato

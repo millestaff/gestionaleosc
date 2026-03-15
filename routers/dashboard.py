@@ -626,7 +626,7 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
             roles = [r for r in roles if r]
             if member and roles:
                 await member.add_roles(*roles)
-                await member.edit(nick=f"{candidatura.get('nome', '')} {candidatura.get('cognome', '')}")
+                await member.edit(nick=f"Tir - {candidatura.get('nome', '')} {candidatura.get('cognome', '')}")
                 nomi_ruoli = ", ".join([r.name for r in roles])
                 embed = nextcord.Embed(
                     title="🏥 Candidatura Approvata!",
