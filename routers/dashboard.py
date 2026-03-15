@@ -136,12 +136,13 @@ async def aggiorna_stato_dipendente(request: Request, user: dict = Depends(requi
 @router.get("/pazienti", response_class=HTMLResponse)
 async def pazienti(request: Request, user: dict = Depends(get_current_user), db=Depends(get_db)):
     lista = await db["pazienti"].find({"archiviato": {"$ne": True}}).sort("timestamp", -1).to_list(100)
+    deceduti = await db["pazienti"].find({"archiviato": True}).sort("timestamp", -1).to_list(100)
     cittadini = await db["cittadini"].find().sort("registrato_il", -1).to_list(200)
     dipendenti = await db["dipendenti"].find({"approvato": True}).to_list(100)
     visite = await db["prenotazioni_visite"].find().sort("timestamp", -1).to_list(200)
     return templates.TemplateResponse("pazienti.html", {
         "request": request, "user": user,
-        "pazienti": lista, "cittadini": cittadini,
+        "pazienti": lista, "deceduti": deceduti, "cittadini": cittadini,
         "dipendenti": dipendenti, "visite": visite,
         "active_section": "pazienti",
     })
