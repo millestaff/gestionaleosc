@@ -626,6 +626,7 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
             roles = [r for r in roles if r]
             if member and roles:
                 await member.add_roles(*roles)
+                await member.edit(nick=f"{candidatura.get('nome', '')} {candidatura.get('cognome', '')}")
                 nomi_ruoli = ", ".join([r.name for r in roles])
                 embed = nextcord.Embed(
                     title="🏥 Candidatura Approvata!",
@@ -652,7 +653,6 @@ async def candidatura_approva(request: Request, user: dict = Depends(require_per
                         embed_pub.add_field(name="🏷️ Ruoli", value=nomi_ruoli, inline=True)
                         embed_pub.add_field(name="✅ Approvato da", value=user["username"], inline=True)
                         await canale.send(embed=embed_pub)
-                await member.edit(nick=f"{candidatura.get('nome', '')} {candidatura.get('cognome', '')}")
             # Aggiungi automaticamente come dipendente approvato
             await db["dipendenti"].update_one(
                 {"discord_id": discord_id},
