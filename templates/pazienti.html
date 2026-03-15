@@ -101,6 +101,32 @@
     </div>
   </div>
 </div>
+
+<!-- ═══ TAB DECEDUTI ═══ -->
+<div id="main-deceduti" style="display:none;">
+  <div class="card">
+    <div class="card-title">☠️ Archivio Pazienti Deceduti</div>
+    {% if deceduti %}
+    <table>
+      <thead>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+      </thead>
+      <tbody>
+        {% for p in deceduti %}
+        <tr>
+          <td><strong>{{ p.nome }} {{ p.cognome }}</strong></td>
+          <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
+          <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun paziente archiviato.</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
 {% block page_title %}Pazienti & Cittadini
 <!-- POPUP RICOVERO -->
@@ -202,6 +228,32 @@
       <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
       <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ TAB DECEDUTI ═══ -->
+<div id="main-deceduti" style="display:none;">
+  <div class="card">
+    <div class="card-title">☠️ Archivio Pazienti Deceduti</div>
+    {% if deceduti %}
+    <table>
+      <thead>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+      </thead>
+      <tbody>
+        {% for p in deceduti %}
+        <tr>
+          <td><strong>{{ p.nome }} {{ p.cognome }}</strong></td>
+          <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
+          <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun paziente archiviato.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -307,6 +359,32 @@
     </div>
   </div>
 </div>
+
+<!-- ═══ TAB DECEDUTI ═══ -->
+<div id="main-deceduti" style="display:none;">
+  <div class="card">
+    <div class="card-title">☠️ Archivio Pazienti Deceduti</div>
+    {% if deceduti %}
+    <table>
+      <thead>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+      </thead>
+      <tbody>
+        {% for p in deceduti %}
+        <tr>
+          <td><strong>{{ p.nome }} {{ p.cognome }}</strong></td>
+          <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
+          <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun paziente archiviato.</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -318,6 +396,7 @@
   <button onclick="showMain('cittadini')" id="mtab-cittadini" class="mtab">👥 Cittadini ({{ cittadini|length }})</button>
   {% if not user.readonly %}
   <button onclick="showMain('aggiungi')" id="mtab-aggiungi" class="mtab">➕ Aggiungi</button>
+  <button onclick="showMain('deceduti')" id="mtab-deceduti" class="mtab">☠️ Archivio ({{ deceduti|length }})</button>
   {% endif %}
 </div>
 
@@ -572,7 +651,7 @@
 
 <script>
 function showMain(name) {
-  ['visite','pazienti','cittadini','aggiungi'].forEach(t => {
+  ['visite','pazienti','cittadini','aggiungi','deceduti'].forEach(t => {
     const el = document.getElementById('main-' + t);
     const tab = document.getElementById('mtab-' + t);
     if (el) el.style.display = t === name ? '' : 'none';
@@ -834,6 +913,32 @@ async function eliminaCittadino(discord_id) {
       <button onclick="confermaRicovero()" class="btn btn-primary">🛏️ Conferma Ricovero</button>
       <button onclick="document.getElementById('ric-modal').style.display='none'" class="btn btn-ghost">Annulla</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ TAB DECEDUTI ═══ -->
+<div id="main-deceduti" style="display:none;">
+  <div class="card">
+    <div class="card-title">☠️ Archivio Pazienti Deceduti</div>
+    {% if deceduti %}
+    <table>
+      <thead>
+        <tr><th>Paziente</th><th>Diagnosi</th><th>Medico Ref.</th><th>Registrato</th></tr>
+      </thead>
+      <tbody>
+        {% for p in deceduti %}
+        <tr>
+          <td><strong>{{ p.nome }} {{ p.cognome }}</strong></td>
+          <td style="font-size:13px;">{{ p.diagnosi or "—" }}</td>
+          <td style="font-size:13px;">{{ p.medico_ref or "—" }}</td>
+          <td style="font-size:12px;color:var(--text-muted);">{{ p.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-muted);text-align:center;padding:32px 0;">Nessun paziente archiviato.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
